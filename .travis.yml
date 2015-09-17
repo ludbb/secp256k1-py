@@ -6,7 +6,6 @@ python:
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq git libtool autoconf automake
-before_script:
   - git clone git://github.com/bitcoin/secp256k1.git libsecp256k1
   - cd libsecp256k1
   - ./autogen.sh
