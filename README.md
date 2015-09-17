@@ -5,6 +5,9 @@ FFI bindings for secp256k1
 pip install secp256k1
 ```
 
+[![Build Status](https://travis-ci.org/ludbb/secp256k1-py.svg?branch=master)](https://travis-ci.org/ludbb/secp256k1-py)
+
+
 ## Example
 
 ```
