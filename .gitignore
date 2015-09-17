@@ -1,0 +1,4 @@
+build/
+dist/
+secp256k1.egg-info/
+*.pyc
