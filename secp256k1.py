@@ -91,12 +91,15 @@ class PublicKey(Base, ECDSA):
 
         return pubkey
 
-    def ecdsa_verify(self, msg_bytes, raw_sig, digest=hashlib.sha256):
+    def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+        assert self.public_key, "No public key defined"
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
             raise Exception("instance not configured for sig verification")
 
-        assert self.public_key, "No public key defined"
-        msg32 = digest(msg_bytes).digest()
+        if not raw:
+            msg32 = digest(msg).digest()
+        else:
+            msg32 = msg
         if len(msg32) * 8 != 256:
             raise Exception("digest function must produce 256 bits")
 
@@ -165,8 +168,11 @@ class PrivateKey(Base, ECDSA):
 
         return pubkey_ptr
 
-    def ecdsa_sign(self, msg_bytes, digest=hashlib.sha256):
-        msg32 = digest(msg_bytes).digest()
+    def ecdsa_sign(self, msg, raw=False, digest=hashlib.sha256):
+        if not raw:
+            msg32 = digest(msg).digest()
+        else:
+            msg32 = msg
         if len(msg32) * 8 != 256:
             raise Exception("digest function must produce 256 bits")
 
