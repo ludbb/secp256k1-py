@@ -1,5 +1,4 @@
 import os
-import ctypes
 import hashlib
 
 from _libsecp256k1 import ffi, lib

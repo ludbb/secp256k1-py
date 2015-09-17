@@ -1,4 +1,3 @@
-import ctypes.util
 from cffi import FFI
 
 
