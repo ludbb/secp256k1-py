@@ -18,9 +18,13 @@ class Base(object):
             ctx = lib.secp256k1_context_create(flags)
             self._destroy = lib.secp256k1_context_destroy
 
+        self.flags = flags
         self.ctx = ctx
 
     def __del__(self):
+        if not hasattr(self, '_destroy'):
+            return
+
         if self._destroy and self.ctx:
             self._destroy(self.ctx)
             self.ctx = None
@@ -83,6 +87,9 @@ class PublicKey(Base, ECDSA):
         return pubkey
 
     def ecdsa_verify(self, msg_bytes, raw_sig, digest=hashlib.sha256):
+        if self.flags & FLAG_VERIFY != FLAG_VERIFY:
+            raise Exception("instance not configured for sig verification")
+
         assert self.public_key, "No public key defined"
         msg32 = digest(msg_bytes).digest()
         if len(msg32) * 8 != 256:
@@ -97,6 +104,8 @@ class PublicKey(Base, ECDSA):
 class PrivateKey(Base, ECDSA):
 
     def __init__(self, privkey=None, raw=False, ctx=None, flags=ALL_FLAGS):
+        assert flags in (ALL_FLAGS, FLAG_SIGN)
+
         Base.__init__(self, ctx, flags)
         self.public_key = None
         self.private_key = None
@@ -111,7 +120,8 @@ class PrivateKey(Base, ECDSA):
 
     def _update_public_key(self):
         public_key = self._gen_public_key(self.private_key)
-        self.public_key = PublicKey(public_key, raw=True, ctx=self.ctx)
+        self.public_key = PublicKey(
+            public_key, raw=True, ctx=self.ctx, flags=self.flags)
 
     def gen_private_key(self):
         key = os.urandom(32)
