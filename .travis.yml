@@ -18,4 +18,4 @@ before_install:
   - sudo pip install cffi -U
 install:
   - python setup.py -q install
-script: py.tests
+script: py.test
