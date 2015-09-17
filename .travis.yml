@@ -12,6 +12,7 @@ before_install:
   - ./configure
   - make
   - sudo make install
+  - cd ..
   - sudo bash -c 'echo /usr/local/lib > /etc/ld.so.conf.d/local.conf'
   - sudo ldconfig
   - sudo pip install cffi -U
