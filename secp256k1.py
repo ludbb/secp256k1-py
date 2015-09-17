@@ -64,20 +64,25 @@ class PublicKey(Base, ECDSA):
         else:
             self.public_key = None
 
-    def serialize(self):
+    def serialize(self, compressed=True):
         assert self.public_key, "No public key defined"
 
-        len_compressed = 33
+        len_compressed = 33 if compressed else 65
         res_compressed = ffi.new('char [%d]' % len_compressed)
         outlen = ffi.new('int *', len_compressed)
 
         serialized = lib.secp256k1_ec_pubkey_serialize(
-            self.ctx, res_compressed, outlen, self.public_key, 1)
+            self.ctx, res_compressed, outlen, self.public_key, int(compressed))
         assert serialized == 1
 
         return bytes(ffi.buffer(res_compressed, len_compressed))
 
-    def deserialize(self, pubkey_ser):
+    def deserialize(self, pubkey_ser, compressed=True):
+        if compressed:
+            assert len(pubkey_ser) == 33
+        else:
+            assert len(pubkey_ser) == 65
+
         pubkey = ffi.new('secp256k1_pubkey_t *')
 
         res = lib.secp256k1_ec_pubkey_parse(
@@ -131,12 +136,12 @@ class PrivateKey(Base, ECDSA):
         self._update_public_key()
         return key
 
-    def serialize(self):
+    def serialize(self, compressed=True):
         privser = ffi.new('char [279]')
         keylen = ffi.new('int *')
 
         res = lib.secp256k1_ec_privkey_export(
-            self.ctx, privser, keylen, self.private_key, 1)
+            self.ctx, privser, keylen, self.private_key, int(compressed))
         assert res == 1
 
         return bytes(ffi.buffer(privser, keylen[0]))
