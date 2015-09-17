@@ -1,0 +1,8 @@
+build
+dist
+__pycache__
+secp256k1.egg-info
+.eggs
+
+_libsecp256k1*
+*.pyc
