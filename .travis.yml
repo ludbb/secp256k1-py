@@ -14,7 +14,9 @@ before_install:
   - cd ..
   - sudo bash -c 'echo /usr/local/lib > /etc/ld.so.conf.d/local.conf'
   - sudo ldconfig
-  - sudo pip install cffi -U
+  - sudo pip install cffi coverage coveralls -U
 install:
   - python setup.py -q install
-script: py.test
+script: coverage run --source=secp256k1 setup.py pytest
+after_success:
+  - coveralls

@@ -20,7 +20,8 @@ setup(
     license='MIT',
     classifiers=classifiers,
     py_modules=['secp256k1', 'build'],
-    setup_requires=['cffi>=1.0.0'],
+    setup_requires=['cffi>=1.0.0', 'pytest-runner'],
     cffi_modules=['build.py:ffi'],
-    install_requires=['cffi>=1.0.0']
+    install_requires=['cffi>=1.0.0'],
+    tests_require=['pytest']
 )

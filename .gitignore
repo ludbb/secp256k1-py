@@ -5,4 +5,5 @@ secp256k1.egg-info/
 *.pyc
 _libsecp256k1*
 .coverage
+.eggs/
 htmlcov
