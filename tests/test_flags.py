@@ -28,12 +28,12 @@ def test_pubkey():
     sig = privkey.ecdsa_sign(b'hello')
     pubkeyser = privkey.public_key.serialize()
 
-    pubkey = secp256k1.PublicKey(pubkeyser, flags=0)
+    pubkey = secp256k1.PublicKey(pubkeyser, raw=True, flags=0)
     with pytest.raises(Exception):
         # FLAG_SIGN was not specified.
         pubkey.ecdsa_verify(b'hello', sig)
 
-    pubkey = secp256k1.PublicKey(pubkeyser)
+    pubkey = secp256k1.PublicKey(pubkeyser, raw=True)
     assert pubkey.ecdsa_verify(b'hello', sig)
 
 def test_recoverable():

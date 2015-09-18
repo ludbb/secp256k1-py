@@ -53,7 +53,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
         return raw_sig
 
-    def ecdsa_recover(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+    def ecdsa_recover(self, msg, recover_sig, raw=False, digest=hashlib.sha256):
         if not HAS_RECOVERABLE:
             raise Exception("secp256k1_recoverable not enabled")
         if self.flags & ALL_FLAGS != ALL_FLAGS:
@@ -63,7 +63,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         pubkey = ffi.new('secp256k1_pubkey_t *')
 
         recovered = lib.secp256k1_ecdsa_recover(
-            self.ctx, pubkey, raw_sig, msg32)
+            self.ctx, pubkey, recover_sig, msg32)
         if recovered:
             return pubkey
         raise Exception('failed to recover ECDSA public key')
@@ -108,13 +108,13 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
 class PublicKey(Base, ECDSA):
 
-    def __init__(self, pubkey=None, raw=False, ctx=None, flags=FLAG_VERIFY):
+    def __init__(self, pubkey=None, raw=False, flags=FLAG_VERIFY, ctx=None):
         Base.__init__(self, ctx, flags)
         if pubkey:
             if raw:
-                self.public_key = pubkey
-            else:
                 self.public_key = self.deserialize(pubkey)
+            else:
+                self.public_key = pubkey
         else:
             self.public_key = None
 
@@ -131,11 +131,13 @@ class PublicKey(Base, ECDSA):
 
         return bytes(ffi.buffer(res_compressed, len_compressed))
 
-    def deserialize(self, pubkey_ser, compressed=True):
-        if compressed:
-            assert len(pubkey_ser) == 33
+    def deserialize(self, pubkey_ser):
+        if len(pubkey_ser) == 33:
+            compressed = True
+        elif len(pubkey_ser) == 65:
+            compressed = False
         else:
-            assert len(pubkey_ser) == 65
+            raise Exception("unknown public key size (expected 33 or 65)")
 
         pubkey = ffi.new('secp256k1_pubkey_t *')
 
@@ -143,6 +145,7 @@ class PublicKey(Base, ECDSA):
             self.ctx, pubkey, pubkey_ser, len(pubkey_ser))
         assert res == 1
 
+        self.public_key = pubkey
         return pubkey
 
     def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
@@ -160,7 +163,7 @@ class PublicKey(Base, ECDSA):
 
 class PrivateKey(Base, ECDSA):
 
-    def __init__(self, privkey=None, raw=False, ctx=None, flags=ALL_FLAGS):
+    def __init__(self, privkey=None, raw=False, flags=ALL_FLAGS, ctx=None):
         assert flags in (ALL_FLAGS, FLAG_SIGN)
 
         Base.__init__(self, ctx, flags)
@@ -178,7 +181,7 @@ class PrivateKey(Base, ECDSA):
     def _update_public_key(self):
         public_key = self._gen_public_key(self.private_key)
         self.public_key = PublicKey(
-            public_key, raw=True, ctx=self.ctx, flags=self.flags)
+            public_key, raw=False, ctx=self.ctx, flags=self.flags)
 
     def gen_private_key(self):
         key = os.urandom(32)
