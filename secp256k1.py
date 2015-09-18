@@ -132,11 +132,7 @@ class PublicKey(Base, ECDSA):
         return bytes(ffi.buffer(res_compressed, len_compressed))
 
     def deserialize(self, pubkey_ser):
-        if len(pubkey_ser) == 33:
-            compressed = True
-        elif len(pubkey_ser) == 65:
-            compressed = False
-        else:
+        if len(pubkey_ser) not in (33, 65):
             raise Exception("unknown public key size (expected 33 or 65)")
 
         pubkey = ffi.new('secp256k1_pubkey_t *')
