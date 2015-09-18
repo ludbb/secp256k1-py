@@ -9,6 +9,7 @@ def test_values():
 def test_privkey():
     with pytest.raises(AssertionError):
         secp256k1.PrivateKey(flags=secp256k1.FLAG_VERIFY)
+    with pytest.raises(AssertionError):
         secp256k1.PrivateKey(flags=0)
 
     privkey = secp256k1.PrivateKey(flags=secp256k1.FLAG_SIGN)
