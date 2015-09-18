@@ -217,4 +217,4 @@ try:
 except ffiplatform.VerificationError:
     ffi = build_ffi(False)
     ffi.compile()
-    print "secp256k1_recovery not supported"
+    print("secp256k1_recovery not supported")

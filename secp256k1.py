@@ -158,7 +158,6 @@ class PublicKey(Base, ECDSA):
         return bool(verified)
 
 
-
 class PrivateKey(Base, ECDSA):
 
     def __init__(self, privkey=None, raw=False, ctx=None, flags=ALL_FLAGS):
