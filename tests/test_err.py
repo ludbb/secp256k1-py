@@ -32,6 +32,8 @@ def test_publickey():
         # since bytes is an alias to str, instead it will fail
         # during serialization.
         secp256k1.PublicKey('abc', raw=True)
+    with pytest.raises(Exception):
+        secp256k1.PublicKey([], raw=True)
 
     with pytest.raises(Exception):
         # Invalid size.

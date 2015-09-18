@@ -110,7 +110,7 @@ class PublicKey(Base, ECDSA):
 
     def __init__(self, pubkey=None, raw=False, flags=FLAG_VERIFY, ctx=None):
         Base.__init__(self, ctx, flags)
-        if pubkey:
+        if pubkey is not None:
             if raw:
                 if not isinstance(pubkey, bytes):
                     raise TypeError('raw pubkey must be bytes')
