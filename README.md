@@ -1,5 +1,6 @@
 # secp256k1-py
-FFI bindings for secp256k1
+Python FFI bindings for [secp256k1](https://github.com/bitcoin/secp256k1)
+(an experimental and optimized C library for EC operations on curve secp256k1).
 
 ```
 pip install secp256k1
