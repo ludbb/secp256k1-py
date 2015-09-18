@@ -1,4 +1,5 @@
 import pytest
+import hashlib
 import secp256k1
 
 def test_privkey():
@@ -44,3 +45,12 @@ def test_publickey():
     invalid = secp256k1.PublicKey(b'a' * 33)
     with pytest.raises(TypeError):
         invalid.serialize()
+
+    # No public key.
+    assert secp256k1.PublicKey()
+
+def test_ecdsa():
+    priv = secp256k1.PrivateKey()
+    with pytest.raises(Exception):
+        # Bad digestion function (doesn't produce 256 bits).
+        priv.ecdsa_sign(b'hi', digest=hashlib.sha1)
