@@ -1,14 +1,9 @@
-from cffi import FFI
+from cffi import FFI, ffiplatform
 
 
-ffi = FFI()
+definitions = """
+    /* secp256k1.h*/
 
-ffi.set_source(
-    "_libsecp256k1",
-    "#include <secp256k1.h>",
-    libraries=["secp256k1"])
-
-ffi.cdef("""
     typedef struct secp256k1_context_struct secp256k1_context_t;
 
     typedef struct {
@@ -153,8 +148,74 @@ ffi.cdef("""
         const secp256k1_pubkey_t * const * ins,
         int n
     );
-""")
+"""
+
+definitions_recovery = """
+    /* secp256k1_recovery.h */
+
+    typedef struct {
+        unsigned char data[65];
+    } secp256k1_ecdsa_recoverable_signature_t;
+
+    int secp256k1_ecdsa_recoverable_signature_parse_compact(
+        const secp256k1_context_t* ctx,
+        secp256k1_ecdsa_recoverable_signature_t* sig,
+        const unsigned char *input64,
+        int recid
+    );
+
+    int secp256k1_ecdsa_recoverable_signature_convert(
+        const secp256k1_context_t* ctx,
+        secp256k1_ecdsa_signature_t* sig,
+        const secp256k1_ecdsa_recoverable_signature_t* sigin
+    );
+
+    int secp256k1_ecdsa_recoverable_signature_serialize_compact(
+        const secp256k1_context_t* ctx,
+        unsigned char *output64,
+        int *recid,
+        const secp256k1_ecdsa_recoverable_signature_t* sig
+    );
+
+    int secp256k1_ecdsa_sign_recoverable(
+        const secp256k1_context_t* ctx,
+        secp256k1_ecdsa_recoverable_signature_t *sig,
+        const unsigned char *msg32,
+        const unsigned char *seckey,
+        secp256k1_nonce_function_t noncefp,
+        const void *ndata
+    );
+
+    int secp256k1_ecdsa_recover(
+        const secp256k1_context_t* ctx,
+        secp256k1_pubkey_t *pubkey,
+        const secp256k1_ecdsa_recoverable_signature_t *sig,
+        const unsigned char *msg32
+    );
+"""
 
 
-if __name__ == "__main__":
+def build_ffi(include_recovery=True):
+    ffi = FFI()
+
+    source = "#include <secp256k1.h>"
+    source_recovery = "\n#include <secp256k1_recovery.h>"
+
+    ffi.set_source(
+        "_libsecp256k1",
+        source + (source_recovery if include_recovery else ''),
+        libraries=["secp256k1"])
+
+    ffi.cdef(definitions + (definitions_recovery if include_recovery else ''))
+
+    return ffi
+
+
+ffi = build_ffi(False)
+ffi.compile()
+
+try:
+    ffi = build_ffi(True)
     ffi.compile()
+except ffiplatform.VerificationError:
+    print "secp256k1_recovery not supported"

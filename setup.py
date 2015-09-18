@@ -12,7 +12,7 @@ classifiers = [
 
 setup(
     name="secp256k1",
-    version="0.1.5",
+    version="0.1.6",
     description='FFI bindings to secp256k1',
     author='Ludvig Broberg',
     author_email='lud@tutanota.com',

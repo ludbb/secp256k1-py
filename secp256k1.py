@@ -51,6 +51,47 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
         return raw_sig
 
+    def ecdsa_recover(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+        if self.flags & ALL_FLAGS != ALL_FLAGS:
+            raise Exception("instance not configured for ecdsa recover")
+
+        msg32 = _hash32(msg, raw, digest)
+        pubkey = ffi.new('secp256k1_pubkey_t *')
+
+        recovered = lib.secp256k1_ecdsa_recover(
+            self.ctx, pubkey, raw_sig, msg32)
+        if recovered:
+            return pubkey
+        raise Exception('failed to recover ECDSA public key')
+
+    def ecdsa_recoverable_serialize(self, recover_sig):
+        outputlen = 64
+        output = ffi.new('unsigned char[%d]' % outputlen)
+        recid = ffi.new('int *')
+
+        lib.secp256k1_ecdsa_recoverable_signature_serialize_compact(
+            self.ctx, output, recid, recover_sig)
+
+        return bytes(ffi.buffer(output, outputlen)), recid[0]
+
+    def ecdsa_recoverable_deserialize(self, ser_sig, rec_id):
+        recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
+
+        parsed = lib.secp256k1_ecdsa_recoverable_signature_parse_compact(
+            self.ctx, recover_sig, ser_sig, rec_id)
+        if parsed:
+            return recover_sig
+        else:
+            raise Exception('failed to parse ECDSA compact sig')
+
+    def ecdsa_recoverable_convert(self, recover_sig):
+        normal_sig = ffi.new('secp256k1_ecdsa_signature_t *')
+
+        lib.secp256k1_ecdsa_recoverable_signature_convert(
+            self.ctx, normal_sig, recover_sig)
+
+        return normal_sig
+
 
 class PublicKey(Base, ECDSA):
 
@@ -96,17 +137,13 @@ class PublicKey(Base, ECDSA):
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
             raise Exception("instance not configured for sig verification")
 
-        if not raw:
-            msg32 = digest(msg).digest()
-        else:
-            msg32 = msg
-        if len(msg32) * 8 != 256:
-            raise Exception("digest function must produce 256 bits")
+        msg32 = _hash32(msg, raw, digest)
 
-        result = lib.secp256k1_ecdsa_verify(
+        verified = lib.secp256k1_ecdsa_verify(
             self.ctx, raw_sig, msg32, self.public_key)
 
-        return bool(result)
+        return bool(verified)
+
 
 
 class PrivateKey(Base, ECDSA):
@@ -169,16 +206,31 @@ class PrivateKey(Base, ECDSA):
         return pubkey_ptr
 
     def ecdsa_sign(self, msg, raw=False, digest=hashlib.sha256):
-        if not raw:
-            msg32 = digest(msg).digest()
-        else:
-            msg32 = msg
-        if len(msg32) * 8 != 256:
-            raise Exception("digest function must produce 256 bits")
-
+        msg32 = _hash32(msg, raw, digest)
         raw_sig = ffi.new('secp256k1_ecdsa_signature_t *')
+
         signed = lib.secp256k1_ecdsa_sign(
             self.ctx, raw_sig, msg32, self.private_key, ffi.NULL, ffi.NULL)
         assert signed == 1
 
         return raw_sig
+
+    def ecdsa_sign_recoverable(self, msg, raw=False, digest=hashlib.sha256):
+        msg32 = _hash32(msg, raw, digest)
+        raw_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
+
+        signed = lib.secp256k1_ecdsa_sign_recoverable(
+            self.ctx, raw_sig, msg32, self.private_key, ffi.NULL, ffi.NULL)
+        assert signed == 1
+
+        return raw_sig
+
+
+def _hash32(msg, raw, digest):
+    if not raw:
+        msg32 = digest(msg).digest()
+    else:
+        msg32 = msg
+    if len(msg32) * 8 != 256:
+        raise Exception("digest function must produce 256 bits")
+    return msg32

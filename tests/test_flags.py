@@ -35,3 +35,14 @@ def test_pubkey():
 
     pubkey = secp256k1.PublicKey(pubkeyser)
     assert pubkey.ecdsa_verify(b'hello', sig)
+
+def test_recoverable():
+    privkey = secp256k1.PrivateKey(flags=secp256k1.FLAG_SIGN)
+    x = privkey.ecdsa_sign_recoverable(b'hi')
+    with pytest.raises(Exception):
+        # All flags required.
+        privkey.ecdsa_recover(b'hi', x)
+
+    privkey = secp256k1.PrivateKey()
+    x = privkey.ecdsa_sign_recoverable(b'hi')
+    privkey.ecdsa_recover(b'hi', x)
