@@ -18,7 +18,7 @@ The `PrivateKey` class loads or creates a private key by obtaining 32 bytes from
 ##### Instantiation parameters
 
 - `privkey=None` - generate a new private key if None, otherwise load a private key.
-- `raw=False` - if `True`, it is assumed that `privkey` is in the DER format, otherwise the raw bytes are used as is. This is not used when `privkey` is not specified.
+- `raw=True` - if `True`, it is assumed that `privkey` is just a sequence of bytes, otherwise it is assumed that it is in the DER format. This is not used when `privkey` is not specified.
 - `flags=secp256k1.ALL_FLAGS` - see Constants.
 
 ##### Methods and instance attributes
@@ -26,8 +26,8 @@ The `PrivateKey` class loads or creates a private key by obtaining 32 bytes from
 - `public_key`: an instance of `secp256k1.PublicKey`.
 - `private_key`: raw bytes for the private key.
 
-##### `gen_private_keys()` -> bytes
-generate a new private key and update the `public_key` and `private_key` for this instance.
+##### `set_raw_privkey(privkey)`
+update the `private_key` for this instance with the bytes specified by `privkey`. If `privkey` is invalid, an Exception is raised. The `public_key` is also updated based on the new private key.
 
 ##### `serialize(compressed=True)` -> bytes
 convert the raw bytes present in `private key` to DER.
@@ -53,7 +53,7 @@ The `PublicKey` class loads an existing public key and operates over it.
 ##### Instantiation parameters
 
 - `pubkey=None` - do not load a public key if None, otherwise do.
-- `raw=False` - if `False`, it is assumed that `pubkey` has gone through `PublicKey.deserialize` already, otherwise it gets deserialized now.
+- `raw=False` - if `False`, it is assumed that `pubkey` has gone through `PublicKey.deserialize` already, otherwise it must be specified as bytes.
 - `flags=secp256k1.FLAG_VERIFY` - see Constants.
 
 ##### Methods and instance attributes
@@ -64,7 +64,7 @@ The `PublicKey` class loads an existing public key and operates over it.
 convert the `public_key` to bytes. If `compressed` is True, 33 bytes will be produced, otherwise 65 will be.
 
 ##### `deserialize(pubkey_ser)` -> internal object
-convert the bytes resulting from a previous `serialize` call back to an internal object and update the `public_key` for this instance. The length of `pubkey_ser` determines if it was serialized with `compressed=True` or not.
+convert the bytes resulting from a previous `serialize` call back to an internal object and update the `public_key` for this instance. The length of `pubkey_ser` determines if it was serialized with `compressed=True` or not. This will raise an Exception if the size is invalid or if the key is invalid.
 
 ##### `ecdsa_verify(msg, raw_sig, raw=False, digest=hashlib.sha256)` -> bool
 verify an ECDSA signature and return True if the signature is correct, False otherwise. `raw_sig` is expected to be an object returned from `ecdsa_sign` (or if it was serialized using `ecdsa_serialize`, then first run it through `ecdsa_deserialize`). `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
@@ -158,7 +158,7 @@ key = '7ccca75d019dbae79ac4266501578684ee64eeb3c9212105f7a3bdc0ddb0f27e'
 pub_compressed = '03e9a06e539d6bf5cf1ca5c41b59121fa3df07a338322405a312c67b6349a707e9'
 pub_uncompressed = '04e9a06e539d6bf5cf1ca5c41b59121fa3df07a338322405a312c67b6349a707e94c181c5fe89306493dd5677143a329065606740ee58b873e01642228a09ecf9d'
 
-privkey = PrivateKey(bytes(bytearray.fromhex(key)), raw=True)
+privkey = PrivateKey(bytes(bytearray.fromhex(key)))
 pubkey_ser = privkey.public_key.serialize()
 pubkey_ser_uncompressed = privkey.public_key.serialize(compressed=False)
 

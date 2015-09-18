@@ -1,0 +1,46 @@
+import pytest
+import secp256k1
+
+def test_privkey():
+    with pytest.raises(TypeError):
+        key = 'abc'
+        secp256k1.PrivateKey(key)
+
+    with pytest.raises(TypeError):
+        key = bytearray.fromhex('a' * 32)  # This will result in 16 bytes.
+        secp256k1.PrivateKey(bytes(key))
+
+    with pytest.raises(Exception):
+        secp256k1.PrivateKey(bytes(bytearray.fromhex('0' * 64)))
+
+    with pytest.raises(Exception):
+        secp256k1.PrivateKey(bytes(bytearray.fromhex('F' * 64)))
+
+    with pytest.raises(Exception):
+        # This is a good raw key, but here it's being passed as serialized.
+        secp256k1.PrivateKey(b'1' * 32, raw=False)
+
+    # "good" key, should be fine.
+    assert secp256k1.PrivateKey(b'1' * 32)
+
+def test_publickey():
+    with pytest.raises(Exception):
+        # Must be bytes.
+
+        # In Python 2 this will not raise a TypeError
+        # since bytes is an alias to str, instead it will fail
+        # during serialization.
+        secp256k1.PublicKey('abc', raw=True)
+
+    with pytest.raises(Exception):
+        # Invalid size.
+        secp256k1.PublicKey(b'abc', raw=True)
+
+    with pytest.raises(Exception):
+        # Invalid public key.
+        secp256k1.PublicKey(b'a' * 33, raw=True)
+
+    # Invalid usage: passing a raw public key but not specifying raw=True.
+    invalid = secp256k1.PublicKey(b'a' * 33)
+    with pytest.raises(TypeError):
+        invalid.serialize()

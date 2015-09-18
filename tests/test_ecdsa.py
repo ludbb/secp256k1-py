@@ -19,8 +19,7 @@ def test_ecdsa():
         msg32 = bytes(bytearray.fromhex(item['msg']))
         sig = bytes(bytearray.fromhex(item['sig'])[:-1])
 
-        inst.private_key = seckey
-        inst._update_public_key()
+        inst.set_raw_privkey(seckey)
 
         sig_raw = inst.ecdsa_sign(msg32, raw=True)
         sig_check = inst.ecdsa_serialize(sig_raw)

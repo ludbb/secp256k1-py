@@ -18,8 +18,7 @@ def test_pubkey_from_privkey():
         pubkey_uncp = bytes(bytearray.fromhex(item['pubkey']))
         pubkey_comp = bytes(bytearray.fromhex(item['compressed']))
 
-        inst.private_key = seckey
-        inst._update_public_key()
+        inst.set_raw_privkey(seckey)
 
         assert inst.public_key.serialize(compressed=False) == pubkey_uncp
         assert inst.public_key.serialize(compressed=True) == pubkey_comp

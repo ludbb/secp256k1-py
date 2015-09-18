@@ -112,6 +112,8 @@ class PublicKey(Base, ECDSA):
         Base.__init__(self, ctx, flags)
         if pubkey:
             if raw:
+                if not isinstance(pubkey, bytes):
+                    raise TypeError('raw pubkey must be bytes')
                 self.public_key = self.deserialize(pubkey)
             else:
                 self.public_key = pubkey
@@ -139,7 +141,8 @@ class PublicKey(Base, ECDSA):
 
         res = lib.secp256k1_ec_pubkey_parse(
             self.ctx, pubkey, pubkey_ser, len(pubkey_ser))
-        assert res == 1
+        if not res:
+            raise Exception("invalid public key")
 
         self.public_key = pubkey
         return pubkey
@@ -159,18 +162,19 @@ class PublicKey(Base, ECDSA):
 
 class PrivateKey(Base, ECDSA):
 
-    def __init__(self, privkey=None, raw=False, flags=ALL_FLAGS, ctx=None):
+    def __init__(self, privkey=None, raw=True, flags=ALL_FLAGS, ctx=None):
         assert flags in (ALL_FLAGS, FLAG_SIGN)
 
         Base.__init__(self, ctx, flags)
         self.public_key = None
         self.private_key = None
         if privkey is None:
-            self.gen_private_key()
+            self.set_raw_privkey(_gen_private_key())
         else:
             if raw:
-                self.private_key = privkey
-                self._update_public_key()
+                if len(privkey) != 32 or not isinstance(privkey, bytes):
+                    raise TypeError('privkey must be composed of 32 bytes')
+                self.set_raw_privkey(privkey)
             else:
                 self.deserialize(privkey)
 
@@ -179,13 +183,11 @@ class PrivateKey(Base, ECDSA):
         self.public_key = PublicKey(
             public_key, raw=False, ctx=self.ctx, flags=self.flags)
 
-    def gen_private_key(self):
-        key = os.urandom(32)
-        assert lib.secp256k1_ec_seckey_verify(self.ctx, key) == 1
-
-        self.private_key = key
+    def set_raw_privkey(self, privkey):
+        if not lib.secp256k1_ec_seckey_verify(self.ctx, privkey):
+            raise Exception("invalid private key")
+        self.private_key = privkey
         self._update_public_key()
-        return key
 
     def serialize(self, compressed=True):
         privser = ffi.new('char [279]')
@@ -202,10 +204,11 @@ class PrivateKey(Base, ECDSA):
 
         res = lib.secp256k1_ec_privkey_import(
             self.ctx, privkey, privkey_ser, len(privkey_ser))
-        assert res == 1
+        if not res:
+            raise Exception("invalid private key")
 
-        self.private_key = bytes(ffi.buffer(privkey, 32))
-        self._update_public_key()
+        rawkey = bytes(ffi.buffer(privkey, 32))
+        self.set_raw_privkey(rawkey)
         return self.private_key
 
     def _gen_public_key(self, privkey):
@@ -248,3 +251,8 @@ def _hash32(msg, raw, digest):
     if len(msg32) * 8 != 256:
         raise Exception("digest function must produce 256 bits")
     return msg32
+
+
+def _gen_private_key():
+    key = os.urandom(32)
+    return key
