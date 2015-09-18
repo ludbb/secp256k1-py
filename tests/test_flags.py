@@ -37,6 +37,10 @@ def test_pubkey():
     assert pubkey.ecdsa_verify(b'hello', sig)
 
 def test_recoverable():
+    if not secp256k1.HAS_RECOVERABLE:
+        pytest.skip('secp256k1_recoverable not enabled, skipping')
+        return
+
     privkey = secp256k1.PrivateKey(flags=secp256k1.FLAG_SIGN)
     x = privkey.ecdsa_sign_recoverable(b'hi')
     with pytest.raises(Exception):

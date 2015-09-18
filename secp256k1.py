@@ -8,6 +8,8 @@ FLAG_SIGN = lib.SECP256K1_CONTEXT_SIGN
 FLAG_VERIFY = lib.SECP256K1_CONTEXT_VERIFY
 ALL_FLAGS = FLAG_SIGN | FLAG_VERIFY
 
+HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
+
 
 class Base(object):
 
@@ -52,6 +54,8 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         return raw_sig
 
     def ecdsa_recover(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+        if not HAS_RECOVERABLE:
+            raise Exception("secp256k1_recoverable not enabled")
         if self.flags & ALL_FLAGS != ALL_FLAGS:
             raise Exception("instance not configured for ecdsa recover")
 
@@ -65,6 +69,9 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         raise Exception('failed to recover ECDSA public key')
 
     def ecdsa_recoverable_serialize(self, recover_sig):
+        if not HAS_RECOVERABLE:
+            raise Exception("secp256k1_recoverable not enabled")
+
         outputlen = 64
         output = ffi.new('unsigned char[%d]' % outputlen)
         recid = ffi.new('int *')
@@ -75,6 +82,9 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         return bytes(ffi.buffer(output, outputlen)), recid[0]
 
     def ecdsa_recoverable_deserialize(self, ser_sig, rec_id):
+        if not HAS_RECOVERABLE:
+            raise Exception("secp256k1_recoverable not enabled")
+
         recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
 
         parsed = lib.secp256k1_ecdsa_recoverable_signature_parse_compact(
@@ -85,6 +95,9 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
             raise Exception('failed to parse ECDSA compact sig')
 
     def ecdsa_recoverable_convert(self, recover_sig):
+        if not HAS_RECOVERABLE:
+            raise Exception("secp256k1_recoverable not enabled")
+
         normal_sig = ffi.new('secp256k1_ecdsa_signature_t *')
 
         lib.secp256k1_ecdsa_recoverable_signature_convert(
@@ -216,6 +229,9 @@ class PrivateKey(Base, ECDSA):
         return raw_sig
 
     def ecdsa_sign_recoverable(self, msg, raw=False, digest=hashlib.sha256):
+        if not HAS_RECOVERABLE:
+            raise Exception("secp256k1_recoverable not enabled")
+
         msg32 = _hash32(msg, raw, digest)
         raw_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
 

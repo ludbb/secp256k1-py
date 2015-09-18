@@ -211,11 +211,10 @@ def build_ffi(include_recovery=True):
     return ffi
 
 
-ffi = build_ffi(False)
-ffi.compile()
-
 try:
     ffi = build_ffi(True)
     ffi.compile()
 except ffiplatform.VerificationError:
+    ffi = build_ffi(False)
+    ffi.compile()
     print "secp256k1_recovery not supported"
