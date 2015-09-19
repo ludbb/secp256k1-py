@@ -56,3 +56,17 @@ def test_ecdsa():
     with pytest.raises(Exception):
         # Bad digestion function (doesn't produce 256 bits).
         priv.ecdsa_sign(b'hi', digest=hashlib.sha1)
+
+    raw_sig = priv.ecdsa_sign(b'hi')
+    assert priv.public_key.ecdsa_verify(b'hi', raw_sig)
+
+    with pytest.raises(AssertionError):
+        sig = priv.ecdsa_serialize(raw_sig)[:-1]
+        priv.ecdsa_deserialize(sig)
+
+    sig = priv.ecdsa_serialize(raw_sig)
+    sig = sig[:-1] + sig[0]  # Assuming sig[0] != sig[-1].
+    invalid_sig = priv.ecdsa_deserialize(sig)
+    assert not priv.public_key.ecdsa_verify(b'hi', invalid_sig)
+
+test_ecdsa()
