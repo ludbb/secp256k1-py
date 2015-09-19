@@ -170,7 +170,7 @@ These flags are used during context creation (undocumented here) and affect whic
 
 ## Example
 
-```
+```python
 from secp256k1 import PrivateKey, PublicKey
 
 privkey = PrivateKey()
@@ -194,7 +194,7 @@ assert pubkey2.serialize() == pub
 assert pubkey2.ecdsa_verify(b'hello', sig)
 ```
 
-```
+```python
 from secp256k1 import PrivateKey
 
 key = '31a84594060e103f5a63eb742bd46cf5f5900d8406e2726dedfc61c7cf43ebad'
@@ -208,7 +208,7 @@ sig_ser = privkey.ecdsa_serialize(sig_check)
 assert sig_ser == bytes(bytearray.fromhex(sig))
 ```
 
-```
+```python
 from secp256k1 import PrivateKey
 
 key = '7ccca75d019dbae79ac4266501578684ee64eeb3c9212105f7a3bdc0ddb0f27e'
