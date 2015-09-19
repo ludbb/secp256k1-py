@@ -202,10 +202,8 @@ def build_ffi(include_recovery=True):
     source = "#include <secp256k1.h>"
     source_recovery = "\n#include <secp256k1_recovery.h>"
 
-    libpath = None
-    incpath = [os.environ['HEADER_PATH']] if 'HEADER_PATH' in os.environ else None
-    if 'LD_LIBRARY_PATH' in os.environ:
-        libpath = os.environ['LD_LIBRARY_PATH'].split(':')
+    incpath = [os.environ['INCLUDE_DIR']] if 'INCLUDE_DIR' in os.environ else None
+    libpath = [os.environ['LIB_DIR']] if 'LIB_DIR' in os.environ else None
     ffi.set_source(
         "_libsecp256k1",
         source + (source_recovery if include_recovery else ''),
