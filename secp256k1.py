@@ -353,7 +353,7 @@ def _parse_cli():
 
     recpub = subparser.add_parser('recpub')
     recpub.add_argument('-m', '--message', required=True, type=bytes_input)
-    recpub.add_argument('-r', '--recid', required=True, type=int)
+    recpub.add_argument('-i', '--recid', required=True, type=int)
     recpub.add_argument('-s', '--signature', required=True)
 
     return parser, enc

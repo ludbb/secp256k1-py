@@ -9,6 +9,63 @@ pip install secp256k1
 ```
 
 
+## Command line usage
+
+###### Generate a private key and show the corresponding public key
+
+```
+$ python -m secp256k1 privkey -p
+
+a1455c78a922c52f391c5784f8ca1457367fa57f9d7a74fdab7d2c90ca05c02e
+Public key: 02477ce3b986ab14d123d6c4167b085f4d08c1569963a0201b2ffc7d9d6086d2f3
+```
+
+###### Sign a message
+
+```
+$ python -m secp256k1 sign \
+	-k a1455c78a922c52f391c5784f8ca1457367fa57f9d7a74fdab7d2c90ca05c02e \
+	-m hello
+
+3045022100a71d86190354d64e5b3eb2bd656313422cdf7def69bf3669cdbfd09a9162c96e0220713b81f3440bff0b639d2f29b2c48494b812fa89b754b7b6cdc9eaa8027cf369
+```
+
+###### Check signature
+
+```
+$ python -m secp256k1 checksig \
+	-p 02477ce3b986ab14d123d6c4167b085f4d08c1569963a0201b2ffc7d9d6086d2f3 \
+	-m hello \
+	-s 3045022100a71d86190354d64e5b3eb2bd656313422cdf7def69bf3669cdbfd09a9162c96e0220713b81f3440bff0b639d2f29b2c48494b812fa89b754b7b6cdc9eaa8027cf369
+
+True
+```
+
+###### Generate a signature that allows recovering the public key
+
+```
+$ python -m secp256k1 signrec \
+	-k a1455c78a922c52f391c5784f8ca1457367fa57f9d7a74fdab7d2c90ca05c02e \
+	-m hello
+
+8eae15eba2207a27befd5057c1e4d35626beb2ba05f3b339f0ce1917c1221f7824ef8bd9d924ff68753262f773ed9f2d5b96263b523a4043fc05d26864412749 0
+```
+
+###### Recover public key
+
+```
+$ python -m secp256k1 recpub \
+	-s 8eae15eba2207a27befd5057c1e4d35626beb2ba05f3b339f0ce1917c1221f7824ef8bd9d924ff68753262f773ed9f2d5b96263b523a4043fc05d26864412749 \
+	-i 0 \
+	-m hello
+
+Public key: 0355fc2ca02eaf579ee44325bd5558f90b54652f719a838e9dadd1aba5fe1a7ef4
+```
+
+
+It is easier to get started with command line, but it is more common to use this as a library. For that, check the next sections.
+
+
 ## API
 
 ### class `secp256k1.PrivateKey(privkey, raw, flags)`

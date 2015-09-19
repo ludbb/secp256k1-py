@@ -112,7 +112,7 @@ def test_cli_ecdsa_recover():
 
     sig_raw, recid = signature.split()
     args = parser.parse_args(
-        ['recpub', '-m', 'hi', '-s', sig_raw, '-r', recid])
+        ['recpub', '-m', 'hi', '-s', sig_raw, '-i', recid])
     out = StringIO()
     res = secp256k1._main_cli(args, out, enc)
     assert res == 0
