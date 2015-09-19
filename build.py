@@ -195,31 +195,95 @@ definitions_recovery = """
     );
 """
 
+definitions_schnorr = """
+    /* secp256k1_schnorr.h */
 
-def build_ffi(include_recovery=True):
+    int secp256k1_schnorr_sign(
+        const secp256k1_context_t* ctx,
+        unsigned char *sig64,
+        const unsigned char *msg32,
+        const unsigned char *seckey,
+        secp256k1_nonce_function_t noncefp,
+        const void *ndata
+    );
+
+    int secp256k1_schnorr_verify(
+        const secp256k1_context_t* ctx,
+        const unsigned char *sig64,
+        const unsigned char *msg32,
+        const secp256k1_pubkey_t *pubkey
+    );
+
+    int secp256k1_schnorr_recover(
+        const secp256k1_context_t* ctx,
+        secp256k1_pubkey_t *pubkey,
+        const unsigned char *sig64,
+        const unsigned char *msg32
+    );
+
+    int secp256k1_schnorr_generate_nonce_pair(
+        const secp256k1_context_t* ctx,
+        secp256k1_pubkey_t *pubnonce,
+        unsigned char *privnonce32,
+        const unsigned char *msg32,
+        const unsigned char *sec32,
+        secp256k1_nonce_function_t noncefp,
+        const void* noncedata
+    );
+
+    int secp256k1_schnorr_partial_sign(
+        const secp256k1_context_t* ctx,
+        unsigned char *sig64,
+        const unsigned char *msg32,
+        const unsigned char *sec32,
+        const secp256k1_pubkey_t *pubnonce_others,
+        const unsigned char *secnonce32
+    );
+
+    int secp256k1_schnorr_partial_combine(
+        const secp256k1_context_t* ctx,
+        unsigned char *sig64,
+        const unsigned char * const * sig64sin,
+        int n
+    );
+"""
+
+
+def build_ffi(include_recovery=True, include_schnorr=True):
     ffi = FFI()
 
     source = "#include <secp256k1.h>"
-    source_recovery = "\n#include <secp256k1_recovery.h>"
+    cdefs = definitions
+    if include_recovery:
+        cdefs += definitions_recovery
+        source += "\n#include <secp256k1_recovery.h>"
+    if include_schnorr:
+        cdefs += definitions_schnorr
+        source += "\n#include <secp256k1_schnorr.h>"
 
     incpath = [os.environ['INCLUDE_DIR']] if 'INCLUDE_DIR' in os.environ else None
     libpath = [os.environ['LIB_DIR']] if 'LIB_DIR' in os.environ else None
+
     ffi.set_source(
         "_libsecp256k1",
-        source + (source_recovery if include_recovery else ''),
+        source,
         libraries=["secp256k1"],
         library_dirs=libpath,
         include_dirs=incpath)
-
-    ffi.cdef(definitions + (definitions_recovery if include_recovery else ''))
+    ffi.cdef(cdefs)
 
     return ffi
 
 
-try:
-    ffi = build_ffi(True)
-    ffi.compile()
-except ffiplatform.VerificationError:
-    ffi = build_ffi(False)
-    ffi.compile()
-    print("secp256k1_recovery not supported")
+_attempts = ((True, True), (True, False), (False, True), (False, False))
+_map = {0: 'secp256k1_recovery', 1: 'secp256k1_schnorr'}
+for opt in _attempts:
+    try:
+        ffi = build_ffi(*opt)
+        ffi.compile()
+        _msg = '\n'.join("{} not supported".format(_map[i])
+            for i, entry in enumerate(opt) if not entry)
+        print(_msg)
+        break
+    except ffiplatform.VerificationError:
+        pass

@@ -9,6 +9,7 @@ FLAG_VERIFY = lib.SECP256K1_CONTEXT_VERIFY
 ALL_FLAGS = FLAG_SIGN | FLAG_VERIFY
 
 HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
+HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorr_sign')
 
 
 class Base(object):
@@ -55,7 +56,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
     def ecdsa_recover(self, msg, recover_sig, raw=False, digest=hashlib.sha256):
         if not HAS_RECOVERABLE:
-            raise Exception("secp256k1_recoverable not enabled")
+            raise Exception("secp256k1_recovery not enabled")
         if self.flags & ALL_FLAGS != ALL_FLAGS:
             raise Exception("instance not configured for ecdsa recover")
 
@@ -70,7 +71,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
     def ecdsa_recoverable_serialize(self, recover_sig):
         if not HAS_RECOVERABLE:
-            raise Exception("secp256k1_recoverable not enabled")
+            raise Exception("secp256k1_recovery not enabled")
 
         outputlen = 64
         output = ffi.new('unsigned char[%d]' % outputlen)
@@ -83,7 +84,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
     def ecdsa_recoverable_deserialize(self, ser_sig, rec_id):
         if not HAS_RECOVERABLE:
-            raise Exception("secp256k1_recoverable not enabled")
+            raise Exception("secp256k1_recovery not enabled")
 
         recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
 
@@ -96,7 +97,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
     def ecdsa_recoverable_convert(self, recover_sig):
         if not HAS_RECOVERABLE:
-            raise Exception("secp256k1_recoverable not enabled")
+            raise Exception("secp256k1_recovery not enabled")
 
         normal_sig = ffi.new('secp256k1_ecdsa_signature_t *')
 
@@ -106,7 +107,45 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         return normal_sig
 
 
-class PublicKey(Base, ECDSA):
+class Schnorr:  # Use as a mixin; instance.ctx is assumed to exist.
+
+    def schnorr_recover(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+        if self.flags & FLAG_VERIFY != FLAG_VERIFY:
+            raise Exception("instance not configured for sig verification")
+
+        msg32 = _hash32(msg, raw, digest)
+        pubkey = ffi.new('secp256k1_pubkey_t *')
+
+        recovered = lib.secp256k1_schnorr_recover(
+            self.ctx, pubkey, raw_sig, msg32)
+        if recovered:
+            return pubkey
+        raise Exception('failed to recover public key')
+
+    def schnorr_partial_combine(self, raw_sigs):
+        """Combine multiple Schnorr partial signatures."""
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+        assert len(raw_sigs) > 0
+
+        sig64 = ffi.new('char [64]')
+        sig64sin = []
+        for sig in raw_sigs:
+            if not isinstance(sig, bytes):
+                raise TypeError('expected bytes, got {}'.format(type(sig)))
+            sig64sin.append(ffi.new('char []', sig))
+
+        res = lib.secp256k1_schnorr_partial_combine(
+            self.ctx, sig64, sig64sin, len(sig64sin))
+        if res <= 0:
+            raise Exception('failed to combine signatures ({})'.format(res))
+
+        return bytes(ffi.buffer(sig64, 64))
+
+
+class PublicKey(Base, ECDSA, Schnorr):
 
     def __init__(self, pubkey=None, raw=False, flags=FLAG_VERIFY, ctx=None):
         Base.__init__(self, ctx, flags)
@@ -147,6 +186,22 @@ class PublicKey(Base, ECDSA):
         self.public_key = pubkey
         return pubkey
 
+    def combine(self, pubkeys):
+        """Add a number of public keys together."""
+        assert len(pubkeys) > 0
+
+        outpub = ffi.new('secp256k1_pubkey_t *')
+        for item in pubkeys:
+            assert ffi.typeof(item) is ffi.typeof('secp256k1_pubkey_t *')
+
+        res = lib.secp256k1_ec_pubkey_combine(
+            self.ctx, outpub, pubkeys, len(pubkeys))
+        if not res:
+            raise Exception('failed to combine public keys')
+
+        self.public_key = outpub
+        return outpub
+
     def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
         assert self.public_key, "No public key defined"
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
@@ -159,14 +214,28 @@ class PublicKey(Base, ECDSA):
 
         return bool(verified)
 
+    def schnorr_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+        assert self.public_key, "No public key defined"
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+        if self.flags & FLAG_VERIFY != FLAG_VERIFY:
+            raise Exception("instance not configured for sig verification")
 
-class PrivateKey(Base, ECDSA):
+        msg32 = _hash32(msg, raw, digest)
+
+        verified = lib.secp256k1_schnorr_verify(
+            self.ctx, raw_sig, msg32, self.public_key)
+
+        return bool(verified)
+
+
+class PrivateKey(Base, ECDSA, Schnorr):
 
     def __init__(self, privkey=None, raw=True, flags=ALL_FLAGS, ctx=None):
         assert flags in (ALL_FLAGS, FLAG_SIGN)
 
         Base.__init__(self, ctx, flags)
-        self.public_key = None
+        self.pubkey = None
         self.private_key = None
         if privkey is None:
             self.set_raw_privkey(_gen_private_key())
@@ -180,7 +249,7 @@ class PrivateKey(Base, ECDSA):
 
     def _update_public_key(self):
         public_key = self._gen_public_key(self.private_key)
-        self.public_key = PublicKey(
+        self.pubkey = PublicKey(
             public_key, raw=False, ctx=self.ctx, flags=self.flags)
 
     def set_raw_privkey(self, privkey):
@@ -231,7 +300,7 @@ class PrivateKey(Base, ECDSA):
 
     def ecdsa_sign_recoverable(self, msg, raw=False, digest=hashlib.sha256):
         if not HAS_RECOVERABLE:
-            raise Exception("secp256k1_recoverable not enabled")
+            raise Exception("secp256k1_recovery not enabled")
 
         msg32 = _hash32(msg, raw, digest)
         raw_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
@@ -241,6 +310,66 @@ class PrivateKey(Base, ECDSA):
         assert signed == 1
 
         return raw_sig
+
+    def schnorr_sign(self, msg, raw=False, digest=hashlib.sha256):
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+
+        msg32 = _hash32(msg, raw, digest)
+        sig64 = ffi.new('char [64]')
+
+        signed = lib.secp256k1_schnorr_sign(
+            self.ctx, sig64, msg32, self.private_key, ffi.NULL, ffi.NULL)
+        assert signed == 1
+
+        return bytes(ffi.buffer(sig64, 64))
+
+    def schnorr_generate_nonce_pair(self, msg, raw=False,
+                                    digest=hashlib.sha256):
+        """
+        Generate a nonce pair deterministically for use with
+        schnorr_partial_sign.
+        """
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+
+        msg32 = _hash32(msg, raw, digest)
+        pubnonce = ffi.new('secp256k1_pubkey_t *')
+        privnonce = ffi.new('char [32]')
+        sig64 = ffi.new('char [64]')
+
+        valid = lib.secp256k1_schnorr_generate_nonce_pair(
+            self.ctx, pubnonce, privnonce, msg32, self.private_key,
+            ffi.NULL, ffi.NULL)
+        assert valid == 1
+
+        return pubnonce, privnonce
+
+    def schnorr_partial_sign(self, msg, privnonce, pubnonce_others,
+                             raw=False, digest=hashlib.sha256):
+        """
+        Produce a partial Schnorr signature, which can be combined using
+        schnorr_partial_combine, to end up with a full signature that is
+        verifiable using PublicKey.schnorr_verify.
+
+        To combine pubnonces, use PublicKey.combine.
+
+        Do not pass the pubnonce produced for the respective privnonce;
+        combine the pubnonces from other signers and pass that instead.
+        """
+        if not HAS_SCHNORR:
+            raise Exception("secp256k1_schnorr not enabled")
+
+        msg32 = _hash32(msg, raw, digest)
+        sig64 = ffi.new('char [64]')
+
+        res = lib.secp256k1_schnorr_partial_sign(
+            self.ctx, sig64, msg32, self.private_key,
+            pubnonce_others, privnonce)
+        if res <= 0:
+            raise Exception('failed to partially sign ({})'.format(res))
+
+        return bytes(ffi.buffer(sig64, 64))
 
 
 def _hash32(msg, raw, digest):
@@ -282,14 +411,14 @@ def _main_cli(args, out, encoding='utf-8'):
         raw = priv.private_key
         out.write(u"{}\n".format(binascii.hexlify(raw).decode(encoding)))
         if args.show_pubkey:
-            show_public(priv.public_key)
+            show_public(priv.pubkey)
 
     elif args.action == 'sign':
         priv, sig_raw = sign('ecdsa_sign', args)
         sig = priv.ecdsa_serialize(sig_raw)
         out.write(u"{}\n".format(binascii.hexlify(sig).decode(encoding)))
         if args.show_pubkey:
-            show_public(priv.public_key)
+            show_public(priv.pubkey)
 
     elif args.action == 'checksig':
         raw = bytes(bytearray.fromhex(args.public_key))
@@ -308,7 +437,7 @@ def _main_cli(args, out, encoding='utf-8'):
         sig, recid = priv.ecdsa_recoverable_serialize(sig)
         out.write(u"{} {}\n".format(binascii.hexlify(sig).decode(encoding), recid))
         if args.show_pubkey:
-            show_public(priv.public_key)
+            show_public(priv.pubkey)
 
     elif args.action == 'recpub':
         empty = PublicKey(flags=ALL_FLAGS)

@@ -80,17 +80,17 @@ The `PrivateKey` class loads or creates a private key by obtaining 32 bytes from
 
 ##### Methods and instance attributes
 
-- `public_key`: an instance of `secp256k1.PublicKey`.
+- `pubkey`: an instance of `secp256k1.PublicKey`.
 - `private_key`: raw bytes for the private key.
 
 ##### `set_raw_privkey(privkey)`
-update the `private_key` for this instance with the bytes specified by `privkey`. If `privkey` is invalid, an Exception is raised. The `public_key` is also updated based on the new private key.
+update the `private_key` for this instance with the bytes specified by `privkey`. If `privkey` is invalid, an Exception is raised. The `pubkey` is also updated based on the new private key.
 
 ##### `serialize(compressed=True)` -> bytes
 convert the raw bytes present in `private key` to DER.
 
 ##### `deserialize(privkey_ser)` -> bytes
-convert from DER bytes to raw bytes and update the `public_key` and `private_key` for this instance.
+convert from DER bytes to raw bytes and update the `pubkey` and `private_key` for this instance.
 
 ##### `ecdsa_sign(msg, raw=False, digest=hashlib.sha256)` -> internal object
 by default, create an ECDSA-SHA256 signature from the bytes in `msg`. If `raw` is True, then the `digest` function is not applied over `msg`, otherwise the `digest` must produce 256 bits or an `Exception` will be raised.
@@ -178,15 +178,15 @@ privkey_der = privkey.serialize()
 assert privkey.deserialize(privkey_der) == privkey.private_key
 
 sig = privkey.ecdsa_sign(b'hello')
-verified = privkey.public_key.ecdsa_verify(b'hello', sig)
+verified = privkey.pubkey.ecdsa_verify(b'hello', sig)
 assert verified
 
 sig_der = privkey.ecdsa_serialize(sig)
 sig2 = privkey.ecdsa_deserialize(sig_der)
-vrf2 = privkey.public_key.ecdsa_verify(b'hello', sig2)
+vrf2 = privkey.pubkey.ecdsa_verify(b'hello', sig2)
 assert vrf2
 
-pubkey = privkey.public_key
+pubkey = privkey.pubkey
 pub = pubkey.serialize()
 
 pubkey2 = PublicKey(pub, raw=True)
@@ -216,8 +216,8 @@ pub_compressed = '03e9a06e539d6bf5cf1ca5c41b59121fa3df07a338322405a312c67b6349a7
 pub_uncompressed = '04e9a06e539d6bf5cf1ca5c41b59121fa3df07a338322405a312c67b6349a707e94c181c5fe89306493dd5677143a329065606740ee58b873e01642228a09ecf9d'
 
 privkey = PrivateKey(bytes(bytearray.fromhex(key)))
-pubkey_ser = privkey.public_key.serialize()
-pubkey_ser_uncompressed = privkey.public_key.serialize(compressed=False)
+pubkey_ser = privkey.pubkey.serialize()
+pubkey_ser_uncompressed = privkey.pubkey.serialize(compressed=False)
 
 assert pubkey_ser == bytes(bytearray.fromhex(pub_compressed))
 assert pubkey_ser_uncompressed == bytes(bytearray.fromhex(pub_uncompressed))

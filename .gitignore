@@ -6,4 +6,5 @@ secp256k1.egg-info/
 _libsecp256k1*
 .coverage
 .eggs/
+*.egg
 htmlcov

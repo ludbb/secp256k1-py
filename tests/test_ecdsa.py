@@ -27,11 +27,11 @@ def test_ecdsa():
         assert sig_check == sig
         assert inst.ecdsa_serialize(inst.ecdsa_deserialize(sig_check)) == sig_check
 
-        assert inst.public_key.ecdsa_verify(msg32, sig_raw, raw=True)
+        assert inst.pubkey.ecdsa_verify(msg32, sig_raw, raw=True)
 
 def test_ecdsa_recover():
     if not secp256k1.HAS_RECOVERABLE:
-        pytest.skip('secp256k1_recoverable not enabled, skipping')
+        pytest.skip('secp256k1_recovery not enabled, skipping')
         return
 
     class MyECDSA(secp256k1.Base, secp256k1.ECDSA):
@@ -46,9 +46,9 @@ def test_ecdsa_recover():
     # Recover the public key.
     pubkey = unrelated.ecdsa_recover(b'hello', recsig)
     # Check that the recovered public key matches the one used
-    # in privkey.public_key.
+    # in privkey.pubkey.
     pubser = secp256k1.PublicKey(pubkey).serialize()
-    assert privkey.public_key.serialize() == pubser
+    assert privkey.pubkey.serialize() == pubser
 
     # Check that after serializing and deserializing recsig
     # we still recover the same public key.

@@ -51,6 +51,17 @@ def test_publickey():
     # No public key.
     assert secp256k1.PublicKey()
 
+    pub1 = secp256k1.PrivateKey().pubkey.public_key
+    new = secp256k1.PublicKey()
+    with pytest.raises(AssertionError):
+        # Trying to combine with something that is not a public key.
+        new.combine([pub1, secp256k1.ffi.NULL])
+
+    new = secp256k1.PublicKey()
+    with pytest.raises(AssertionError):
+        # Nothing to combine.
+        new.combine([])
+
 def test_ecdsa():
     priv = secp256k1.PrivateKey()
     with pytest.raises(Exception):
@@ -58,7 +69,7 @@ def test_ecdsa():
         priv.ecdsa_sign(b'hi', digest=hashlib.sha1)
 
     raw_sig = priv.ecdsa_sign(b'hi')
-    assert priv.public_key.ecdsa_verify(b'hi', raw_sig)
+    assert priv.pubkey.ecdsa_verify(b'hi', raw_sig)
 
     with pytest.raises(AssertionError):
         sig = priv.ecdsa_serialize(raw_sig)[:-1]
@@ -67,6 +78,44 @@ def test_ecdsa():
     sig = priv.ecdsa_serialize(raw_sig)
     sig = sig[:-1] + bytes([sig[0]])  # Assuming sig[0] != sig[-1].
     invalid_sig = priv.ecdsa_deserialize(sig)
-    assert not priv.public_key.ecdsa_verify(b'hi', invalid_sig)
+    assert not priv.pubkey.ecdsa_verify(b'hi', invalid_sig)
 
-test_ecdsa()
+def test_schnorr():
+    if not secp256k1.HAS_SCHNORR:
+        pytest.skip('secp256k1_schnorr not enabled, skipping')
+        return
+
+    inst = secp256k1.PrivateKey()
+    raw_sig = inst.schnorr_sign(b'hello')
+
+    test1 = secp256k1.PublicKey(inst.pubkey.public_key, flags=0)
+    with pytest.raises(Exception):
+        test1.schnorr_verify(b'hello', raw_sig)
+
+    blank = secp256k1.PublicKey(flags=0)
+    with pytest.raises(Exception):
+        blank.schnorr_recover(b'hello', raw_sig)
+
+    blank = secp256k1.PublicKey(flags=secp256k1.FLAG_SIGN)
+    with pytest.raises(Exception):
+        blank.schnorr_recover(b'hello', raw_sig)
+
+def test_schnorr_partial():
+    if not secp256k1.HAS_SCHNORR:
+        pytest.skip('secp256k1_schnorr not enabled, skipping')
+        return
+
+    signer1 = secp256k1.PrivateKey()
+    pubnonce1, privnonce1 = signer1.schnorr_generate_nonce_pair(b'hello')
+
+    signer2 = secp256k1.PrivateKey()
+    pubnonce2, privnonce2 = signer2.schnorr_generate_nonce_pair(b'hello')
+
+    partial1 = signer1.schnorr_partial_sign(b'hello', privnonce1, pubnonce2)
+    blank = secp256k1.PublicKey(flags=0)
+
+    with pytest.raises(TypeError):
+        blank.schnorr_partial_combine([partial1, secp256k1.ffi.NULL])
+
+    with pytest.raises(Exception):
+        blank.schnorr_partial_combine([partial1, b''])

@@ -16,18 +16,18 @@ def test_privkey():
     sig = privkey.ecdsa_sign(b'hi')
     with pytest.raises(Exception):
         # FLAG_SIGN was not specified.
-        privkey.public_key.ecdsa_verify(b'hi', sig)
+        privkey.pubkey.ecdsa_verify(b'hi', sig)
 
-    assert privkey.flags == privkey.public_key.flags
+    assert privkey.flags == privkey.pubkey.flags
 
     privkey = secp256k1.PrivateKey()
     sig = privkey.ecdsa_sign(b'hi')
-    assert privkey.public_key.ecdsa_verify(b'hi', sig)
+    assert privkey.pubkey.ecdsa_verify(b'hi', sig)
 
 def test_pubkey():
     privkey = secp256k1.PrivateKey()
     sig = privkey.ecdsa_sign(b'hello')
-    pubkeyser = privkey.public_key.serialize()
+    pubkeyser = privkey.pubkey.serialize()
 
     pubkey = secp256k1.PublicKey(pubkeyser, raw=True, flags=0)
     with pytest.raises(Exception):
@@ -39,7 +39,7 @@ def test_pubkey():
 
 def test_recoverable():
     if not secp256k1.HAS_RECOVERABLE:
-        pytest.skip('secp256k1_recoverable not enabled, skipping')
+        pytest.skip('secp256k1_recovery not enabled, skipping')
         return
 
     privkey = secp256k1.PrivateKey(flags=secp256k1.FLAG_SIGN)
