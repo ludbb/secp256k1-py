@@ -1,6 +1,7 @@
 import os
 import json
 import pytest
+from io import StringIO
 
 import secp256k1
 
@@ -59,3 +60,61 @@ def test_ecdsa_recover():
 
     raw_sig = unrelated.ecdsa_recoverable_convert(recsig2)
     unrelated.ecdsa_deserialize(unrelated.ecdsa_serialize(raw_sig))
+
+def test_cli_ecdsa():
+    parser, enc = secp256k1._parse_cli()
+
+    args = parser.parse_args(['privkey', '-p'])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    raw_privkey, raw_pubkey = out.getvalue().strip().split('\n')
+    raw_pubkey = raw_pubkey.split(':')[1].strip()
+
+    args = parser.parse_args(['sign', '-k', raw_privkey, '-m', 'hi', '-p'])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    signature, raw_pubkey2 = out.getvalue().strip().split('\n')
+    assert raw_pubkey2.split(':')[1].strip() == raw_pubkey
+
+    args = parser.parse_args(
+        ['checksig', '-p', raw_pubkey, '-m', 'hi', '-s', signature])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    assert out.getvalue().strip() == str(True)
+
+    # Pass an invalid signature.
+    args = parser.parse_args(
+        ['checksig', '-p', raw_pubkey, '-m', 'hi', '-s', signature[:-2]])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 1
+    assert out.getvalue().strip() == str(False)
+
+def test_cli_ecdsa_recover():
+    parser, enc = secp256k1._parse_cli()
+
+    args = parser.parse_args(['privkey', '-p'])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    raw_privkey, raw_pubkey = out.getvalue().strip().split('\n')
+    raw_pubkey = raw_pubkey.split(':')[1].strip()
+
+    args = parser.parse_args(['signrec', '-k', raw_privkey, '-m', 'hi', '-p'])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    signature, raw_pubkey2 = out.getvalue().strip().split('\n')
+    assert raw_pubkey2.split(':')[1].strip() == raw_pubkey
+
+    sig_raw, recid = signature.split()
+    args = parser.parse_args(
+        ['recpub', '-m', 'hi', '-s', sig_raw, '-r', recid])
+    out = StringIO()
+    res = secp256k1._main_cli(args, out, enc)
+    assert res == 0
+    recpub = out.getvalue().strip()
+    assert recpub.split(':')[1].strip() == raw_pubkey
