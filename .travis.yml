@@ -28,7 +28,7 @@ install:
   - LIB_PATH=./libsecp256k1/.libs HEADER_PATH=./libsecp256k1/include python setup.py -q install
 
 script:
-  - LIB_PATH=./libsecp256k1/.libs HEADER_PATH=./libsecp256k1/include coverage run --source=secp256k1 setup.py pytest
+  - LD_LIBRARY_PATH=./libsecp256k1/.libs coverage run --source=secp256k1 setup.py pytest
 
 after_success:
   - coveralls
