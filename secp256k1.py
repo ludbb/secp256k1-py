@@ -357,7 +357,6 @@ class PrivateKey(Base, ECDSA, Schnorr):
         msg32 = _hash32(msg, raw, digest)
         pubnonce = ffi.new('secp256k1_pubkey_t *')
         privnonce = ffi.new('char [32]')
-        sig64 = ffi.new('char [64]')
 
         valid = lib.secp256k1_schnorr_generate_nonce_pair(
             self.ctx, pubnonce, privnonce, msg32, self.private_key,
