@@ -10,6 +10,7 @@ ALL_FLAGS = FLAG_SIGN | FLAG_VERIFY
 
 HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
 HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorr_sign')
+HAS_ECDH = hasattr(lib, 'secp256k1_ecdh')
 
 
 class Base(object):
@@ -156,6 +157,9 @@ class PublicKey(Base, ECDSA, Schnorr):
                     raise TypeError('raw pubkey must be bytes')
                 self.public_key = self.deserialize(pubkey)
             else:
+                if not isinstance(pubkey, ffi.CData):
+                    raise TypeError('pubkey must be an internal object')
+                assert ffi.typeof(pubkey) is ffi.typeof('secp256k1_pubkey_t *')
                 self.public_key = pubkey
         else:
             self.public_key = None
@@ -230,6 +234,21 @@ class PublicKey(Base, ECDSA, Schnorr):
 
         return bool(verified)
 
+    def ecdh(self, scalar):
+        assert self.public_key, "No public key defined"
+        if not HAS_ECDH:
+            raise Exception("secp256k1_ecdh not enabled")
+        if not isinstance(scalar, bytes) or len(scalar) != 32:
+            raise TypeError('scalar must be composed of 32 bytes')
+
+        result = ffi.new('char [32]')
+
+        res = lib.secp256k1_ecdh(self.ctx, result, self.public_key, scalar)
+        if not res:
+            raise Exception('invalid scalar ({})'.format(res))
+
+        return bytes(ffi.buffer(result, 32))
+
 
 class PrivateKey(Base, ECDSA, Schnorr):
 
@@ -243,7 +262,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
             self.set_raw_privkey(_gen_private_key())
         else:
             if raw:
-                if len(privkey) != 32 or not isinstance(privkey, bytes):
+                if not isinstance(privkey, bytes) or len(privkey) != 32:
                     raise TypeError('privkey must be composed of 32 bytes')
                 self.set_raw_privkey(privkey)
             else:

@@ -30,7 +30,7 @@ def test_publickey():
 
         # In Python 2 this will not raise a TypeError
         # since bytes is an alias to str, instead it will fail
-        # during serialization.
+        # during deserialization.
         secp256k1.PublicKey('abc', raw=True)
     with pytest.raises(Exception):
         secp256k1.PublicKey([], raw=True)
@@ -44,9 +44,8 @@ def test_publickey():
         secp256k1.PublicKey(b'a' * 33, raw=True)
 
     # Invalid usage: passing a raw public key but not specifying raw=True.
-    invalid = secp256k1.PublicKey(b'a' * 33)
     with pytest.raises(TypeError):
-        invalid.serialize()
+        secp256k1.PublicKey(b'a' * 33)
 
     # No public key.
     assert secp256k1.PublicKey()

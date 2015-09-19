@@ -147,6 +147,11 @@ verify an ECDSA signature and return True if the signature is correct, False oth
 ##### `schnorr_verify(msg, schnorr_sig, raw=False, digest=hashlib.sha256)` -> bool
 verify a Schnorr signature and return True if the signature is correct, False otherwise. `schnorr_sig` is expected to be the result from either `schnorr_partial_combine` or `schnorr_sign`. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
 
+##### `ecdh(scalar)` -> bytes
+compute an EC Diffie-Hellman secret in constant time. The instance `public_key` is used as the public point, and the `scalar` specified must be composed of 32 bytes. It outputs 32 bytes representing the ECDH secret computed. If the `scalar` is invalid, an Exception is raised.
+
+> NOTE: `ecdh` can only be used if the `secp256k1` C library is compiled with support for it. If there is no support, an Exception will be raised when calling it.
+
 
 ### class `secp256k1.ECDSA`
 
