@@ -109,7 +109,8 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
 class Schnorr:  # Use as a mixin; instance.ctx is assumed to exist.
 
-    def schnorr_recover(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+    def schnorr_recover(self, msg, schnorr_sig, raw=False,
+                        digest=hashlib.sha256):
         if not HAS_SCHNORR:
             raise Exception("secp256k1_schnorr not enabled")
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
@@ -119,20 +120,20 @@ class Schnorr:  # Use as a mixin; instance.ctx is assumed to exist.
         pubkey = ffi.new('secp256k1_pubkey_t *')
 
         recovered = lib.secp256k1_schnorr_recover(
-            self.ctx, pubkey, raw_sig, msg32)
+            self.ctx, pubkey, schnorr_sig, msg32)
         if recovered:
             return pubkey
         raise Exception('failed to recover public key')
 
-    def schnorr_partial_combine(self, raw_sigs):
+    def schnorr_partial_combine(self, schnorr_sigs):
         """Combine multiple Schnorr partial signatures."""
         if not HAS_SCHNORR:
             raise Exception("secp256k1_schnorr not enabled")
-        assert len(raw_sigs) > 0
+        assert len(schnorr_sigs) > 0
 
         sig64 = ffi.new('char [64]')
         sig64sin = []
-        for sig in raw_sigs:
+        for sig in schnorr_sigs:
             if not isinstance(sig, bytes):
                 raise TypeError('expected bytes, got {}'.format(type(sig)))
             sig64sin.append(ffi.new('char []', sig))
@@ -214,7 +215,8 @@ class PublicKey(Base, ECDSA, Schnorr):
 
         return bool(verified)
 
-    def schnorr_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
+    def schnorr_verify(self, msg, schnorr_sig, raw=False,
+                       digest=hashlib.sha256):
         assert self.public_key, "No public key defined"
         if not HAS_SCHNORR:
             raise Exception("secp256k1_schnorr not enabled")
@@ -224,7 +226,7 @@ class PublicKey(Base, ECDSA, Schnorr):
         msg32 = _hash32(msg, raw, digest)
 
         verified = lib.secp256k1_schnorr_verify(
-            self.ctx, raw_sig, msg32, self.public_key)
+            self.ctx, schnorr_sig, msg32, self.public_key)
 
         return bool(verified)
 
@@ -349,7 +351,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
                              raw=False, digest=hashlib.sha256):
         """
         Produce a partial Schnorr signature, which can be combined using
-        schnorr_partial_combine, to end up with a full signature that is
+        schnorr_partial_combine to end up with a full signature that is
         verifiable using PublicKey.schnorr_verify.
 
         To combine pubnonces, use PublicKey.combine.

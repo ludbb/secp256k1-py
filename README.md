@@ -102,6 +102,21 @@ create a recoverable ECDSA signature. See `ecdsa_sign` for parameters descriptio
 
 > NOTE: `ecdsa_sign_recoverable` can only be used if the `secp256k1` C library is compiled with support for it. If there is no support, an Exception will be raised when calling it.
 
+##### `schnorr_sign(msg, raw=False, digest=hashlib.sha256)` -> bytes
+create a signature using a custom EC-Schnorr-SHA256 construction. It
+produces non-malleable 64-byte signatures which support public key recovery
+batch validation, and multiparty signing. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
+
+##### `schnorr_generate_nonce_pair(msg, raw=False, digest=hashlib.sha256)` -> (internal object, internal object)
+generate a nonce pair deterministically for use with `schnorr_partial_sign`. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
+
+##### `schnorr_partial_sign(msg, privnonce, pubnonce_others, raw=False, digest=hashlib.sha256)` -> bytes
+produce a partial Schnorr signature, which can be combined using `schnorr_partial_combine` to end up with a full signature that is verifiable using `PublicKey.schnorr_verify`. `privnonce` is the second item in the tuple returned by `schnorr_generate_nonce_pair`, `pubnonce_others` represent the combined public nonces excluding the one associated to this `privnonce`. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
+
+To combine pubnonces, use `PublicKey.combine`.
+
+Do not pass the pubnonce produced for the respective privnonce; combine the pubnonces from other signers and pass that instead.
+
 
 ### class `secp256k1.PublicKey(pubkey, raw, flags)`
 
@@ -123,11 +138,17 @@ convert the `public_key` to bytes. If `compressed` is True, 33 bytes will be pro
 ##### `deserialize(pubkey_ser)` -> internal object
 convert the bytes resulting from a previous `serialize` call back to an internal object and update the `public_key` for this instance. The length of `pubkey_ser` determines if it was serialized with `compressed=True` or not. This will raise an Exception if the size is invalid or if the key is invalid.
 
+##### `combine(pubkeys)` -> internal object
+combine multiple public keys (those returned from `PublicKey.deserialize`) and return a public key (which can be serialized as any other regular public key). The `public_key` for this instance is updated to use the resulting combined key. If it is not possible the combine the keys, an Exception is raised.
+
 ##### `ecdsa_verify(msg, raw_sig, raw=False, digest=hashlib.sha256)` -> bool
 verify an ECDSA signature and return True if the signature is correct, False otherwise. `raw_sig` is expected to be an object returned from `ecdsa_sign` (or if it was serialized using `ecdsa_serialize`, then first run it through `ecdsa_deserialize`). `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
 
+##### `schnorr_verify(msg, schnorr_sig, raw=False, digest=hashlib.sha256)` -> bool
+verify a Schnorr signature and return True if the signature is correct, False otherwise. `schnorr_sig` is expected to be the result from either `schnorr_partial_combine` or `schnorr_sign`. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
 
-### `class ECDSA`
+
+### class `secp256k1.ECDSA`
 
 The `ECDSA` class is intended to be used as a mix in. Its methods can be accessed from any `secp256k1.PrivateKey` or `secp256k1.PublicKey` instances.
 
@@ -154,6 +175,21 @@ convert the result from `ecdsa_recoverable_serialize` back to an internal object
 convert a recoverable signature to a normal signature, i.e. one that can be used by `ecdsa_serialize` and related methods.
 
 > NOTE: `ecdsa_recover*` can only be used if the `secp256k1` C library is compiled with support for it. If there is no support, an Exception will be raised when calling any of them.
+
+
+### class `secp256k1.Schnorr`
+
+The `Schnorr` class is intended to be used as a mix in. Its methods can be accessed from any `secp256k1.PrivateKey` or `secp256k1.PublicKey` instances.
+
+##### Methods
+
+##### `schnorr_recover(msg, schnorr_sig, raw=False, digest=hashlib.sha256)` -> internal object
+recover and return a public key from a Schnorr signature. `schnorr_sig` is expected to be the result from `schnorr_partial_combine` or `schnorr_sign`. `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.
+
+##### `schnorr_partial_combine(schnorr_sigs)` -> bytes
+combine multiple Schnorr partial signatures. `raw_sigs` is expected to be a list (or similar iterable) of signatures resulting from `PrivateKey.schnorr_partial_sign`. If the signatures cannot be combined, an Exception is raised.
+
+> NOTE: `schnorr_*` can only be used if the `secp256k1` C library is compiled with support for it. If there is no support, an Exception will be raised when calling any of them.
 
 
 ### Constants
