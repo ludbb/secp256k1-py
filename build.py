@@ -248,8 +248,19 @@ definitions_schnorr = """
     );
 """
 
+definitions_ecdh = """
+    /* secp256k1_ecdh.h */
 
-def build_ffi(include_recovery=True, include_schnorr=True):
+    int secp256k1_ecdh(
+        const secp256k1_context_t* ctx,
+        unsigned char *result,
+        const secp256k1_pubkey_t *point,
+        const unsigned char *scalar
+    );
+"""
+
+
+def build_ffi(include_recovery=False, include_schnorr=False, include_ecdh=False):
     ffi = FFI()
 
     source = "#include <secp256k1.h>"
@@ -260,6 +271,9 @@ def build_ffi(include_recovery=True, include_schnorr=True):
     if include_schnorr:
         cdefs += definitions_schnorr
         source += "\n#include <secp256k1_schnorr.h>"
+    if include_ecdh:
+        cdefs += definitions_ecdh
+        source += "\n#include <secp256k1_ecdh.h>"
 
     incpath = [os.environ['INCLUDE_DIR']] if 'INCLUDE_DIR' in os.environ else None
     libpath = [os.environ['LIB_DIR']] if 'LIB_DIR' in os.environ else None
@@ -275,15 +289,32 @@ def build_ffi(include_recovery=True, include_schnorr=True):
     return ffi
 
 
-_attempts = ((True, True), (True, False), (False, True), (False, False))
-_map = {0: 'secp256k1_recovery', 1: 'secp256k1_schnorr'}
-for opt in _attempts:
+_modules = {
+    'secp256k1_recovery': [False, {'include_recovery': True}],
+    'secp256k1_schnorr': [False, {'include_schnorr': True}],
+    'secp256k1_ecdh': [False, {'include_ecdh': True}]
+}
+
+# Check which modules are available.
+for mod in _modules:
+    kwargs = _modules[mod][1]
     try:
-        ffi = build_ffi(*opt)
-        ffi.compile()
-        _msg = '\n'.join("{} not supported".format(_map[i])
-            for i, entry in enumerate(opt) if not entry)
-        print(_msg)
-        break
+        _ffi = build_ffi(**kwargs)
+        _ffi.compile()
+        _modules[mod][0] = True
     except ffiplatform.VerificationError:
         pass
+
+# Build interface with all active modules.
+_kwargs = {}
+_not_avail = []
+for mod, val in _modules.items():
+    if val[0]:
+        _kwargs.update(val[1])
+    else:
+        _not_avail.append(mod)
+
+ffi = build_ffi(**_kwargs)
+ffi.compile()
+
+print('\n'.join('{} not supported'.format(entry) for entry in _not_avail))

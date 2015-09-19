@@ -19,7 +19,6 @@ def test_schnorr_simple():
     pub = secp256k1.PublicKey(pubkey)
     assert pub.serialize() == inst.pubkey.serialize()
 
-
 def test_schnorr_partial():
     if not secp256k1.HAS_SCHNORR:
         pytest.skip('secp256k1_schnorr not enabled, skipping')
