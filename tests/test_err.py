@@ -65,7 +65,7 @@ def test_ecdsa():
         priv.ecdsa_deserialize(sig)
 
     sig = priv.ecdsa_serialize(raw_sig)
-    sig = sig[:-1] + sig[0]  # Assuming sig[0] != sig[-1].
+    sig = sig[:-1] + bytes([sig[0]])  # Assuming sig[0] != sig[-1].
     invalid_sig = priv.ecdsa_deserialize(sig)
     assert not priv.public_key.ecdsa_verify(b'hi', invalid_sig)
 
