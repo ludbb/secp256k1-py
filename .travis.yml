@@ -2,21 +2,33 @@ language: python
 python:
   - "2.7"
   - "3.3"
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - git
+      - libtool
+      - autoconf
+      - automake
+
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq git libtool autoconf automake
   - git clone git://github.com/bitcoin/secp256k1.git libsecp256k1
-  - cd libsecp256k1
+  - pusdh libsecp256k1
   - ./autogen.sh
   - ./configure --enable-module-recovery --enable-module-ecdh --enable-module-schnorr
   - make
-  - sudo make install
-  - cd ..
-  - sudo bash -c 'echo /usr/local/lib > /etc/ld.so.conf.d/local.conf'
-  - sudo ldconfig
-  - sudo pip install cffi coverage coveralls -U
+  - popd
+  - virtualenv ENV
+  - source ENV/bin/activate
+  - pip install -U pip setuptools cffi coverage coveralls
+
 install:
-  - python setup.py -q install
-script: coverage run --source=secp256k1 setup.py pytest
+  - LIB_PATH=./libsecp256k1/.libs HEADER_PATH=./libsecp256k1/include python setup.py -q install
+
+script:
+  - LIB_PATH=./libsecp256k1/.libs HEADER_PATH=./libsecp256k1/include coverage run --source=secp256k1 setup.py pytest
+
 after_success:
   - coveralls
