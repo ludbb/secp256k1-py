@@ -1,5 +1,4 @@
-# secp256k1-py
-[![Build Status](https://travis-ci.org/ludbb/secp256k1-py.svg?branch=master)](https://travis-ci.org/ludbb/secp256k1-py) [![Coverage Status](https://coveralls.io/repos/ludbb/secp256k1-py/badge.svg?branch=master&service=github)](https://coveralls.io/github/ludbb/secp256k1-py?branch=master)
+# secp256k1-py [![Build Status](https://travis-ci.org/ludbb/secp256k1-py.svg?branch=master)](https://travis-ci.org/ludbb/secp256k1-py) [![Coverage Status](https://coveralls.io/repos/ludbb/secp256k1-py/badge.svg?branch=master&service=github)](https://coveralls.io/github/ludbb/secp256k1-py?branch=master)
 
 Python FFI bindings for [secp256k1](https://github.com/bitcoin/secp256k1)
 (an experimental and optimized C library for EC operations on curve secp256k1).
