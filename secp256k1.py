@@ -86,6 +86,8 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
     def ecdsa_recoverable_deserialize(self, ser_sig, rec_id):
         if not HAS_RECOVERABLE:
             raise Exception("secp256k1_recovery not enabled")
+        if rec_id < 0 or rec_id > 3:
+            raise Exception("invalid rec_id")
 
         recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
 

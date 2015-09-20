@@ -79,6 +79,23 @@ def test_ecdsa():
     invalid_sig = priv.ecdsa_deserialize(sig)
     assert not priv.pubkey.ecdsa_verify(b'hi', invalid_sig)
 
+def test_ecdsa_recoverable():
+    key = '32a8935ffdb984a498b0f7ac8943e0d2ac084e81c809595fd19fde41522f1837'
+    priv = secp256k1.PrivateKey(bytes(bytearray.fromhex(key)))
+    sig = priv.ecdsa_sign_recoverable(b'hi')
+    sig_ser, rec_id = priv.ecdsa_recoverable_serialize(sig)
+
+    with pytest.raises(Exception):
+        # Invalid rec_id (must be between 0 and 3)
+        priv.ecdsa_recoverable_deserialize(sig_ser, -1)
+
+    assert rec_id == 0
+    # Deserialize using a rec_id that does not match.
+    sig = priv.ecdsa_recoverable_deserialize(sig_ser, 2)
+    with pytest.raises(Exception):
+        # Now try to recover the public key.
+        priv.ecdsa_recover(b'hi', sig)
+
 def test_schnorr():
     if not secp256k1.HAS_SCHNORR:
         pytest.skip('secp256k1_schnorr not enabled, skipping')
