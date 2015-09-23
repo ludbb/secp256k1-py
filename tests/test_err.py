@@ -64,7 +64,7 @@ def test_publickey():
 def test_ecdsa():
     priv = secp256k1.PrivateKey()
     with pytest.raises(Exception):
-        # Bad digestion function (doesn't produce 256 bits).
+        # Bad digest function (doesn't produce 256 bits).
         priv.ecdsa_sign(b'hi', digest=hashlib.sha1)
 
     raw_sig = priv.ecdsa_sign(b'hi')
