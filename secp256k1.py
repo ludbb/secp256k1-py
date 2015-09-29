@@ -39,7 +39,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
     def ecdsa_serialize(self, raw_sig):
         len_sig = 74
         output = ffi.new('unsigned char[%d]' % len_sig)
-        outputlen = ffi.new('int *', len_sig)
+        outputlen = ffi.new('size_t *', len_sig)
 
         res = lib.secp256k1_ecdsa_signature_serialize_der(
             self.ctx, output, outputlen, raw_sig)
@@ -48,7 +48,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         return bytes(ffi.buffer(output, outputlen[0]))
 
     def ecdsa_deserialize(self, ser_sig):
-        raw_sig = ffi.new('secp256k1_ecdsa_signature_t *')
+        raw_sig = ffi.new('secp256k1_ecdsa_signature *')
         res = lib.secp256k1_ecdsa_signature_parse_der(
             self.ctx, raw_sig, ser_sig, len(ser_sig))
         assert res == 1
@@ -62,7 +62,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
             raise Exception("instance not configured for ecdsa recover")
 
         msg32 = _hash32(msg, raw, digest)
-        pubkey = ffi.new('secp256k1_pubkey_t *')
+        pubkey = ffi.new('secp256k1_pubkey *')
 
         recovered = lib.secp256k1_ecdsa_recover(
             self.ctx, pubkey, recover_sig, msg32)
@@ -89,7 +89,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         if rec_id < 0 or rec_id > 3:
             raise Exception("invalid rec_id")
 
-        recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
+        recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature *')
 
         parsed = lib.secp256k1_ecdsa_recoverable_signature_parse_compact(
             self.ctx, recover_sig, ser_sig, rec_id)
@@ -102,7 +102,7 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
         if not HAS_RECOVERABLE:
             raise Exception("secp256k1_recovery not enabled")
 
-        normal_sig = ffi.new('secp256k1_ecdsa_signature_t *')
+        normal_sig = ffi.new('secp256k1_ecdsa_signature *')
 
         lib.secp256k1_ecdsa_recoverable_signature_convert(
             self.ctx, normal_sig, recover_sig)
@@ -120,7 +120,7 @@ class Schnorr:  # Use as a mixin; instance.ctx is assumed to exist.
             raise Exception("instance not configured for sig verification")
 
         msg32 = _hash32(msg, raw, digest)
-        pubkey = ffi.new('secp256k1_pubkey_t *')
+        pubkey = ffi.new('secp256k1_pubkey *')
 
         recovered = lib.secp256k1_schnorr_recover(
             self.ctx, pubkey, schnorr_sig, msg32)
@@ -161,7 +161,7 @@ class PublicKey(Base, ECDSA, Schnorr):
             else:
                 if not isinstance(pubkey, ffi.CData):
                     raise TypeError('pubkey must be an internal object')
-                assert ffi.typeof(pubkey) is ffi.typeof('secp256k1_pubkey_t *')
+                assert ffi.typeof(pubkey) is ffi.typeof('secp256k1_pubkey *')
                 self.public_key = pubkey
         else:
             self.public_key = None
@@ -171,7 +171,7 @@ class PublicKey(Base, ECDSA, Schnorr):
 
         len_compressed = 33 if compressed else 65
         res_compressed = ffi.new('char [%d]' % len_compressed)
-        outlen = ffi.new('int *', len_compressed)
+        outlen = ffi.new('size_t *', len_compressed)
 
         serialized = lib.secp256k1_ec_pubkey_serialize(
             self.ctx, res_compressed, outlen, self.public_key, int(compressed))
@@ -183,7 +183,7 @@ class PublicKey(Base, ECDSA, Schnorr):
         if len(pubkey_ser) not in (33, 65):
             raise Exception("unknown public key size (expected 33 or 65)")
 
-        pubkey = ffi.new('secp256k1_pubkey_t *')
+        pubkey = ffi.new('secp256k1_pubkey *')
 
         res = lib.secp256k1_ec_pubkey_parse(
             self.ctx, pubkey, pubkey_ser, len(pubkey_ser))
@@ -197,9 +197,9 @@ class PublicKey(Base, ECDSA, Schnorr):
         """Add a number of public keys together."""
         assert len(pubkeys) > 0
 
-        outpub = ffi.new('secp256k1_pubkey_t *')
+        outpub = ffi.new('secp256k1_pubkey *')
         for item in pubkeys:
-            assert ffi.typeof(item) is ffi.typeof('secp256k1_pubkey_t *')
+            assert ffi.typeof(item) is ffi.typeof('secp256k1_pubkey *')
 
         res = lib.secp256k1_ec_pubkey_combine(
             self.ctx, outpub, pubkeys, len(pubkeys))
@@ -283,7 +283,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
 
     def serialize(self, compressed=True):
         privser = ffi.new('char [279]')
-        keylen = ffi.new('int *')
+        keylen = ffi.new('size_t *')
 
         res = lib.secp256k1_ec_privkey_export(
             self.ctx, privser, keylen, self.private_key, int(compressed))
@@ -304,7 +304,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
         return self.private_key
 
     def _gen_public_key(self, privkey):
-        pubkey_ptr = ffi.new('secp256k1_pubkey_t *')
+        pubkey_ptr = ffi.new('secp256k1_pubkey *')
 
         created = lib.secp256k1_ec_pubkey_create(self.ctx, pubkey_ptr, privkey)
         assert created == 1
@@ -313,7 +313,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
 
     def ecdsa_sign(self, msg, raw=False, digest=hashlib.sha256):
         msg32 = _hash32(msg, raw, digest)
-        raw_sig = ffi.new('secp256k1_ecdsa_signature_t *')
+        raw_sig = ffi.new('secp256k1_ecdsa_signature *')
 
         signed = lib.secp256k1_ecdsa_sign(
             self.ctx, raw_sig, msg32, self.private_key, ffi.NULL, ffi.NULL)
@@ -326,7 +326,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
             raise Exception("secp256k1_recovery not enabled")
 
         msg32 = _hash32(msg, raw, digest)
-        raw_sig = ffi.new('secp256k1_ecdsa_recoverable_signature_t *')
+        raw_sig = ffi.new('secp256k1_ecdsa_recoverable_signature *')
 
         signed = lib.secp256k1_ecdsa_sign_recoverable(
             self.ctx, raw_sig, msg32, self.private_key, ffi.NULL, ffi.NULL)
@@ -357,7 +357,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
             raise Exception("secp256k1_schnorr not enabled")
 
         msg32 = _hash32(msg, raw, digest)
-        pubnonce = ffi.new('secp256k1_pubkey_t *')
+        pubnonce = ffi.new('secp256k1_pubkey *')
         privnonce = ffi.new('char [32]')
 
         valid = lib.secp256k1_schnorr_generate_nonce_pair(
