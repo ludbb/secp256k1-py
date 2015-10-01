@@ -75,8 +75,8 @@ definitions = """
         const secp256k1_pubkey *pubkey
     );
 
-//    extern const secp256k1_nonce_function secp256k1_nonce_function_rfc6979;
-//    extern const secp256k1_nonce_function secp256k1_nonce_function_default;
+    extern const secp256k1_nonce_function secp256k1_nonce_function_rfc6979;
+    extern const secp256k1_nonce_function secp256k1_nonce_function_default;
 
 
     int secp256k1_ecdsa_sign(
