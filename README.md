@@ -7,6 +7,13 @@ Python FFI bindings for [secp256k1](https://github.com/bitcoin/secp256k1)
 pip install secp256k1
 ```
 
+In case the headers or lib for secp256k1 are not in your path, it's
+possible to specify `INCLUDE_DIR` and `LIB_DIR` as in:
+
+```
+INCLUDE_DIR=/usr/local/include LIB_DIR=/usr/local/lib pip install secp256k1
+```
+
 
 ## Command line usage
 
