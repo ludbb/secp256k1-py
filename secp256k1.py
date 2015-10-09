@@ -88,6 +88,8 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
             raise Exception("secp256k1_recovery not enabled")
         if rec_id < 0 or rec_id > 3:
             raise Exception("invalid rec_id")
+        if len(ser_sig) != 64:
+            raise Exception("invalid signature length")
 
         recover_sig = ffi.new('secp256k1_ecdsa_recoverable_signature *')
 

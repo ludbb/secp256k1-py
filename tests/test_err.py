@@ -96,6 +96,10 @@ def test_ecdsa_recoverable():
         # Now try to recover the public key.
         priv.ecdsa_recover(b'hi', sig)
 
+    # Invalid size.
+    with pytest.raises(Exception):
+        priv.ecdsa_recoverable_deserialize(b'hello', 0)
+
 def test_schnorr():
     if not secp256k1.HAS_SCHNORR:
         pytest.skip('secp256k1_schnorr not enabled, skipping')
