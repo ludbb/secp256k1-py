@@ -27,6 +27,8 @@ definitions = """
     #define SECP256K1_CONTEXT_VERIFY 1
     #define SECP256K1_CONTEXT_SIGN   2
 
+    #define SECP256K1_EC_COMPRESSED  1
+
     secp256k1_context* secp256k1_context_create(
         int flags
     );
@@ -54,6 +56,12 @@ definitions = """
         unsigned int flags
     );
 
+    int secp256k1_ecdsa_signature_parse_compact(
+        const secp256k1_context* ctx,
+        secp256k1_ecdsa_signature* sig,
+        const unsigned char *input64
+    );
+
     int secp256k1_ecdsa_signature_parse_der(
         const secp256k1_context* ctx,
         secp256k1_ecdsa_signature* sig,
@@ -68,11 +76,23 @@ definitions = """
         const secp256k1_ecdsa_signature* sig
     );
 
+    int secp256k1_ecdsa_signature_serialize_compact(
+        const secp256k1_context* ctx,
+        unsigned char *output64,
+        const secp256k1_ecdsa_signature* sig
+    );
+
     int secp256k1_ecdsa_verify(
         const secp256k1_context* ctx,
         const secp256k1_ecdsa_signature *sig,
         const unsigned char *msg32,
         const secp256k1_pubkey *pubkey
+    );
+
+    int secp256k1_ecdsa_signature_normalize(
+        const secp256k1_context* ctx,
+        secp256k1_ecdsa_signature *sigout,
+        const secp256k1_ecdsa_signature *sigin
     );
 
     extern const secp256k1_nonce_function secp256k1_nonce_function_rfc6979;
