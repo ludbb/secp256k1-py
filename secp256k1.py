@@ -55,6 +55,47 @@ class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
 
         return raw_sig
 
+    def ecdsa_serialize_compact(self, raw_sig):
+        len_sig = 64
+        output = ffi.new('unsigned char[%d]' % len_sig)
+
+        res = lib.secp256k1_ecdsa_signature_serialize_compact(
+            self.ctx, output, raw_sig)
+        assert res == 1
+
+        return bytes(ffi.buffer(output, len_sig))
+
+    def ecdsa_deserialize_compact(self, ser_sig):
+        if len(ser_sig) != 64:
+            raise Exception("invalid signature length")
+
+        raw_sig = ffi.new('secp256k1_ecdsa_signature *')
+        res = lib.secp256k1_ecdsa_signature_parse_compact(
+            self.ctx, raw_sig, ser_sig)
+        assert res == 1
+
+        return raw_sig
+
+    def ecdsa_signature_normalize(self, raw_sig, check_only=False):
+        """
+        Check and optionally convert a signature to a normalized lower-S form.
+        If check_only is True then the normalized signature is not returned.
+
+        This function always return a tuple containing a boolean (True if
+        not previously normalized or False if signature was already
+        normalized), and the normalized signature. When check_only is True,
+        the normalized signature returned is always None.
+        """
+        if check_only:
+            sigout = ffi.NULL
+        else:
+            sigout = ffi.new('secp256k1_ecdsa_signature *')
+
+        result = lib.secp256k1_ecdsa_signature_normalize(
+            self.ctx, sigout, raw_sig)
+
+        return (bool(result), sigout if sigout != ffi.NULL else None)
+
     def ecdsa_recover(self, msg, recover_sig, raw=False, digest=hashlib.sha256):
         if not HAS_RECOVERABLE:
             raise Exception("secp256k1_recovery not enabled")

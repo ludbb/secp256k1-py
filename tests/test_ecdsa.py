@@ -29,6 +29,42 @@ def test_ecdsa():
 
         assert inst.pubkey.ecdsa_verify(msg32, sig_raw, raw=True)
 
+def test_ecdsa_compact():
+    key = secp256k1.PrivateKey()
+    raw_sig = key.ecdsa_sign(b'test')
+    assert key.pubkey.ecdsa_verify(b'test', raw_sig)
+
+    compact = key.ecdsa_serialize_compact(raw_sig)
+    assert len(compact) == 64
+
+    sig_raw = key.ecdsa_deserialize_compact(compact)
+    assert key.ecdsa_serialize_compact(sig_raw) == compact
+    assert key.pubkey.ecdsa_verify(b'test', sig_raw)
+
+def test_ecdsa_normalize():
+    key = secp256k1.PrivateKey()
+    raw_sig = key.ecdsa_sign(b'hi')
+
+    had_to_normalize, normsig = key.ecdsa_signature_normalize(raw_sig)
+    assert had_to_normalize == False
+    assert key.ecdsa_serialize(normsig) == key.ecdsa_serialize(raw_sig)
+    assert key.ecdsa_serialize_compact(normsig) == \
+            key.ecdsa_serialize_compact(raw_sig)
+
+    had_to_normalize, normsig = key.ecdsa_signature_normalize(
+        raw_sig, check_only=True)
+    assert had_to_normalize == False
+    assert normsig == None
+
+    sig = b'\xAA' + (b'\xFF' * 31) + b'\xAA' + (b'\xFF' * 31)
+    raw_sig = key.ecdsa_deserialize_compact(sig)
+    normalized, normsig = key.ecdsa_signature_normalize(raw_sig)
+    assert normalized == True
+    assert key.ecdsa_serialize(normsig) != key.ecdsa_serialize(raw_sig)
+    normalized, normsig = key.ecdsa_signature_normalize(raw_sig, True)
+    assert normalized == True
+    assert normsig == None
+
 def test_ecdsa_recover():
     if not secp256k1.HAS_RECOVERABLE:
         pytest.skip('secp256k1_recovery not enabled, skipping')

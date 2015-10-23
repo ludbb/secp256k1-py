@@ -81,6 +81,19 @@ def test_ecdsa():
     invalid_sig = priv.ecdsa_deserialize(sig)
     assert not priv.pubkey.ecdsa_verify(b'hi', invalid_sig)
 
+def test_ecdsa_compact():
+    key = secp256k1.PrivateKey()
+
+    raw_sig = key.ecdsa_sign(b'hi')
+    with pytest.raises(TypeError):
+        # Should pass a compact serialization.
+        key.ecdsa_deserialize_compact(raw_sig)
+
+    ser = key.ecdsa_serialize(raw_sig)
+    with pytest.raises(Exception):
+        # A serialization that is not compact has more than 64 bytes.
+        key.ecdsa_deserialize_compact(ser)
+
 def test_ecdsa_recoverable():
     key = '32a8935ffdb984a498b0f7ac8943e0d2ac084e81c809595fd19fde41522f1837'
     priv = secp256k1.PrivateKey(bytes(bytearray.fromhex(key)))
