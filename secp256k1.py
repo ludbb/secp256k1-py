@@ -182,6 +182,8 @@ class Schnorr:  # Use as a mixin; instance.ctx is assumed to exist.
         for sig in schnorr_sigs:
             if not isinstance(sig, bytes):
                 raise TypeError('expected bytes, got {}'.format(type(sig)))
+            if len(sig) != 64:
+                raise Exception('invalid signature length')
             sig64sin.append(ffi.new('char []', sig))
 
         res = lib.secp256k1_schnorr_partial_combine(
