@@ -62,7 +62,9 @@ def test_publickey():
         new.combine([])
 
 def test_ecdsa():
-    priv = secp256k1.PrivateKey()
+    rawkey = (b'\xc9\xa9)Z\xf8Er\x97\x8b\xa23\x1f\xf7\xb6\x82qQ\xdc9\xc1'
+              b'\x1d\xac6\xfd\xeb\x11\x05\xb1\xdf\x86\xb3\xe6')
+    priv = secp256k1.PrivateKey(rawkey)
     with pytest.raises(Exception):
         # Bad digest function (doesn't produce 256 bits).
         priv.ecdsa_sign(b'hi', digest=hashlib.sha1)
@@ -84,12 +86,12 @@ def test_ecdsa_recoverable():
     priv = secp256k1.PrivateKey(bytes(bytearray.fromhex(key)))
     sig = priv.ecdsa_sign_recoverable(b'hi')
     sig_ser, rec_id = priv.ecdsa_recoverable_serialize(sig)
+    assert rec_id == 1
 
     with pytest.raises(Exception):
         # Invalid rec_id (must be between 0 and 3)
         priv.ecdsa_recoverable_deserialize(sig_ser, -1)
 
-    assert rec_id == 0
     # Deserialize using a rec_id that does not match.
     sig = priv.ecdsa_recoverable_deserialize(sig_ser, 2)
     with pytest.raises(Exception):
