@@ -349,9 +349,8 @@ class PrivateKey(Base, ECDSA, Schnorr):
         res = lib.secp256k1_ec_privkey_tweak_add(self.ctx, newpriv, scalar)
         if not res:
             raise Exception("Failed to add private keys")
-        #TODO Fairly sure this is unnecessary, remove once sure.
         if not lib.secp256k1_ec_seckey_verify(self.ctx, newpriv):
-                    raise Exception("invalid private key resulted from addition.")        
+            raise Exception("invalid private key resulted from addition.")        
         return bytes(ffi.buffer(newpriv,32))
     
     def serialize(self, compressed=True):
