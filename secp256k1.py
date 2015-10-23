@@ -254,6 +254,19 @@ class PublicKey(Base, ECDSA, Schnorr):
         self.public_key = outpub
         return outpub
 
+    def tweak_mul(self, scalar):
+        '''Multiply pubkey by 32 byte scalar.
+        Return new public key object.'''
+        assert self.public_key, "No public key defined."
+        if not isinstance(scalar, bytes) or len(scalar) != 32:
+            raise TypeError('scalar must be composed of 32 bytes')
+        #create distinct Pubkey object
+        newpub = PublicKey(self.serialize(), raw=True)
+        res = lib.secp256k1_ec_pubkey_tweak_mul(self.ctx, newpub.public_key, scalar)
+        if not res:
+            raise Exception("Failed to multiply")
+        return newpub
+    
     def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
         assert self.public_key, "No public key defined"
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
@@ -326,6 +339,21 @@ class PrivateKey(Base, ECDSA, Schnorr):
         self.private_key = privkey
         self._update_public_key()
 
+    def tweak_add(self, scalar):
+        '''Add a 32 byte scalar to this private key and return the
+        result, ensuring that the result is a valid private key also.
+        Result is returned as 32 byte raw/scalar.'''
+        if not isinstance(scalar, bytes) or len(scalar) != 32:
+            raise TypeError('scalar must be composed of 32 bytes')
+        newpriv = ffi.new('char [32]', self.private_key)
+        res = lib.secp256k1_ec_privkey_tweak_add(self.ctx, newpriv, scalar)
+        if not res:
+            raise Exception("Failed to add private keys")
+        #TODO Fairly sure this is unnecessary, remove once sure.
+        if not lib.secp256k1_ec_seckey_verify(self.ctx, newpriv):
+                    raise Exception("invalid private key resulted from addition.")        
+        return bytes(ffi.buffer(newpriv,32))
+    
     def serialize(self, compressed=True):
         privser = ffi.new('char [279]')
         keylen = ffi.new('size_t *')
