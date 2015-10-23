@@ -1,7 +1,6 @@
 from setuptools import setup
 
 classifiers = [
-    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 2",
@@ -12,7 +11,7 @@ classifiers = [
 
 setup(
     name="secp256k1",
-    version="0.8.5",
+    version="0.9.0",
     description='FFI bindings to secp256k1',
     author='Ludvig Broberg',
     author_email='lud@tutanota.com',

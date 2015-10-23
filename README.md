@@ -98,6 +98,12 @@ convert the raw bytes present in `private key` to DER.
 - `deserialize(privkey_ser)` -> bytes<br/>
 convert from DER bytes to raw bytes and update the `pubkey` and `private_key` for this instance.
 
+- `tweak_add(scalar)` -> bytes<br/>
+tweak the current private key by adding a 32 byte scalar to it and return a new raw private key composed of 32 bytes.
+
+- `tweak_mul(scalar)` -> bytes<br/>
+tweak the current private key by multiplying it by a 32 byte scalar and return a new raw private key composed of 32 bytes.
+
 - `ecdsa_sign(msg, raw=False, digest=hashlib.sha256)` -> internal object<br/>
 by default, create an ECDSA-SHA256 signature from the bytes in `msg`. If `raw` is True, then the `digest` function is not applied over `msg`, otherwise the `digest` must produce 256 bits or an `Exception` will be raised.<br/><br/>
 The returned object is a structure from the C lib. If you want to store it (on a disk or similar), use `ecdsa_serialize` and later on use `ecdsa_deserialize` when loading.
@@ -143,6 +149,12 @@ convert the bytes resulting from a previous `serialize` call back to an internal
 
 - `combine(pubkeys)` -> internal object<br/>
 combine multiple public keys (those returned from `PublicKey.deserialize`) and return a public key (which can be serialized as any other regular public key). The `public_key` for this instance is updated to use the resulting combined key. If it is not possible the combine the keys, an Exception is raised.
+
+- `tweak_add(scalar)` -> internal object<br/>
+tweak the current public key by adding a 32 byte scalar times the generator to it and return a new PublicKey instance.
+
+- `tweak_mul(scalar)` -> internal object<br/>
+tweak the current public key by multiplying it by a 32 byte scalar and return a new PublicKey instance.
 
 - `ecdsa_verify(msg, raw_sig, raw=False, digest=hashlib.sha256)` -> bool<br/>
 verify an ECDSA signature and return True if the signature is correct, False otherwise. `raw_sig` is expected to be an object returned from `ecdsa_sign` (or if it was serialized using `ecdsa_serialize`, then first run it through `ecdsa_deserialize`). `msg`, `raw`, and `digest` are used as described in `ecdsa_sign`.

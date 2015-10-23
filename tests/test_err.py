@@ -154,3 +154,17 @@ def test_schnorr_partial():
 
     with pytest.raises(Exception):
         blank.schnorr_partial_combine([partial1, b''])
+
+def test_tweak():
+    key = secp256k1.PrivateKey()
+
+    # Tweak out of range
+    scalar = b'\xFF' * 32
+    with pytest.raises(Exception):
+        key.tweak_mul(scalar)
+    with pytest.raises(Exception):
+        key.tweak_add(scalar)
+    with pytest.raises(Exception):
+        key.pubkey.tweak_mul(scalar)
+    with pytest.raises(Exception):
+        key.pubkey.tweak_add(scalar)

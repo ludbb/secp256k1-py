@@ -254,19 +254,20 @@ class PublicKey(Base, ECDSA, Schnorr):
         self.public_key = outpub
         return outpub
 
+    def tweak_add(self, scalar):
+        """
+        Tweak the current public key by adding a 32 byte scalar times
+        the generator to it and return a new PublicKey instance.
+        """
+        return _tweak_public(self, lib.secp256k1_ec_pubkey_tweak_add, scalar)
+
     def tweak_mul(self, scalar):
-        '''Multiply pubkey by 32 byte scalar.
-        Return new public key object.'''
-        assert self.public_key, "No public key defined."
-        if not isinstance(scalar, bytes) or len(scalar) != 32:
-            raise TypeError('scalar must be composed of 32 bytes')
-        #create distinct Pubkey object
-        newpub = PublicKey(self.serialize(), raw=True)
-        res = lib.secp256k1_ec_pubkey_tweak_mul(self.ctx, newpub.public_key, scalar)
-        if not res:
-            raise Exception("Failed to multiply")
-        return newpub
-    
+        """
+        Tweak the current public key by multiplying it by a 32 byte scalar
+        and return a new PublicKey instance.
+        """
+        return _tweak_public(self, lib.secp256k1_ec_pubkey_tweak_add, scalar)
+
     def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
         assert self.public_key, "No public key defined"
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
@@ -339,20 +340,6 @@ class PrivateKey(Base, ECDSA, Schnorr):
         self.private_key = privkey
         self._update_public_key()
 
-    def tweak_add(self, scalar):
-        '''Add a 32 byte scalar to this private key and return the
-        result, ensuring that the result is a valid private key also.
-        Result is returned as 32 byte raw/scalar.'''
-        if not isinstance(scalar, bytes) or len(scalar) != 32:
-            raise TypeError('scalar must be composed of 32 bytes')
-        newpriv = ffi.new('char [32]', self.private_key)
-        res = lib.secp256k1_ec_privkey_tweak_add(self.ctx, newpriv, scalar)
-        if not res:
-            raise Exception("Failed to add private keys")
-        if not lib.secp256k1_ec_seckey_verify(self.ctx, newpriv):
-            raise Exception("invalid private key resulted from addition.")        
-        return bytes(ffi.buffer(newpriv,32))
-    
     def serialize(self, compressed=True):
         privser = ffi.new('char [279]')
         keylen = ffi.new('size_t *')
@@ -382,6 +369,20 @@ class PrivateKey(Base, ECDSA, Schnorr):
         assert created == 1
 
         return pubkey_ptr
+
+    def tweak_add(self, scalar):
+        """
+        Tweak the current private key by adding a 32 byte scalar
+        to it and return a new raw private key composed of 32 bytes.
+        """
+        return _tweak_private(self, lib.secp256k1_ec_privkey_tweak_add, scalar)
+
+    def tweak_mul(self, scalar):
+        """
+        Tweak the current private key by multiplying it by a 32 byte scalar
+        and return a new raw private key composed of 32 bytes.
+        """
+        return _tweak_private(self, lib.secp256k1_ec_privkey_tweak_mul, scalar)
 
     def ecdsa_sign(self, msg, raw=False, digest=hashlib.sha256):
         msg32 = _hash32(msg, raw, digest)
@@ -479,6 +480,35 @@ def _hash32(msg, raw, digest):
 def _gen_private_key():
     key = os.urandom(32)
     return key
+
+
+def _tweak_public(inst, func, scalar):
+    if not isinstance(scalar, bytes) or len(scalar) != 32:
+        raise TypeError('scalar must be composed of 32 bytes')
+    assert inst.public_key, "No public key defined."
+
+    # Create a copy of the current public key.
+    newpub = PublicKey(inst.serialize(), raw=True)
+
+    res = func(inst.ctx, newpub.public_key, scalar)
+    if not res:
+        raise Exception("Tweak is out of range")
+
+    return newpub
+
+
+def _tweak_private(inst, func, scalar):
+    if not isinstance(scalar, bytes) or len(scalar) != 32:
+        raise TypeError('scalar must be composed of 32 bytes')
+
+    # Create a copy of the current private key.
+    key = ffi.new('char [32]', inst.private_key)
+
+    res = func(inst.ctx, key, scalar)
+    if not res:
+        raise Exception("Tweak is out of range")
+
+    return bytes(ffi.buffer(key, 32))
 
 
 def _main_cli(args, out, encoding='utf-8'):
