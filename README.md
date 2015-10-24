@@ -93,10 +93,10 @@ The `PrivateKey` class loads or creates a private key by obtaining 32 bytes from
 update the `private_key` for this instance with the bytes specified by `privkey`. If `privkey` is invalid, an Exception is raised. The `pubkey` is also updated based on the new private key.
 
 - `serialize(compressed=True)` -> bytes<br/>
-convert the raw bytes present in `private key` to DER.
+convert the raw bytes present in `private key` to a hexadecimal string.
 
 - `deserialize(privkey_ser)` -> bytes<br/>
-convert from DER bytes to raw bytes and update the `pubkey` and `private_key` for this instance.
+convert from a hexadecimal string to raw bytes and update the `pubkey` and `private_key` for this instance.
 
 - `tweak_add(scalar)` -> bytes<br/>
 tweak the current private key by adding a 32 byte scalar to it and return a new raw private key composed of 32 bytes.

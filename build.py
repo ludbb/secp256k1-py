@@ -119,21 +119,6 @@ definitions = """
         const unsigned char *seckey
     );
 
-    int secp256k1_ec_privkey_export(
-        const secp256k1_context* ctx,
-        unsigned char *privkey,
-        size_t *privkeylen,
-        const unsigned char *seckey,
-        unsigned int flags
-    );
-
-    int secp256k1_ec_privkey_import(
-        const secp256k1_context* ctx,
-        unsigned char *seckey,
-        const unsigned char *privkey,
-        size_t privkeylen
-    );
-
     int secp256k1_ec_privkey_tweak_add(
         const secp256k1_context* ctx,
         unsigned char *seckey,

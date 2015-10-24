@@ -1,5 +1,6 @@
 import os
 import hashlib
+import binascii
 
 from _libsecp256k1 import ffi, lib
 
@@ -341,24 +342,14 @@ class PrivateKey(Base, ECDSA, Schnorr):
         self._update_public_key()
 
     def serialize(self, compressed=True):
-        privser = ffi.new('char [279]')
-        keylen = ffi.new('size_t *')
-
-        res = lib.secp256k1_ec_privkey_export(
-            self.ctx, privser, keylen, self.private_key, int(compressed))
-        assert res == 1
-
-        return bytes(ffi.buffer(privser, keylen[0]))
+        hexkey = binascii.hexlify(self.private_key)
+        return hexkey.decode('utf8')
 
     def deserialize(self, privkey_ser):
-        privkey = ffi.new('char [32]')
-
-        res = lib.secp256k1_ec_privkey_import(
-            self.ctx, privkey, privkey_ser, len(privkey_ser))
-        if not res:
+        if len(privkey_ser) != 64:
             raise Exception("invalid private key")
+        rawkey = binascii.unhexlify(privkey_ser)
 
-        rawkey = bytes(ffi.buffer(privkey, 32))
         self.set_raw_privkey(rawkey)
         return self.private_key
 
