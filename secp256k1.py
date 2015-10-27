@@ -5,9 +5,13 @@ import binascii
 from _libsecp256k1 import ffi, lib
 
 
+EC_COMPRESSED = lib.SECP256K1_EC_COMPRESSED
+EC_UNCOMPRESSED = lib.SECP256K1_EC_UNCOMPRESSED
+
 FLAG_SIGN = lib.SECP256K1_CONTEXT_SIGN
 FLAG_VERIFY = lib.SECP256K1_CONTEXT_VERIFY
 ALL_FLAGS = FLAG_SIGN | FLAG_VERIFY
+NO_FLAGS = lib.SECP256K1_CONTEXT_NONE
 
 HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
 HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorr_sign')
@@ -19,7 +23,7 @@ class Base(object):
     def __init__(self, ctx, flags):
         self._destroy = None
         if ctx is None:
-            assert flags in (0, FLAG_SIGN, FLAG_VERIFY, ALL_FLAGS)
+            assert flags in (NO_FLAGS, FLAG_SIGN, FLAG_VERIFY, ALL_FLAGS)
             ctx = lib.secp256k1_context_create(flags)
             self._destroy = lib.secp256k1_context_destroy
 
@@ -218,9 +222,10 @@ class PublicKey(Base, ECDSA, Schnorr):
         len_compressed = 33 if compressed else 65
         res_compressed = ffi.new('char [%d]' % len_compressed)
         outlen = ffi.new('size_t *', len_compressed)
+        compflag = EC_COMPRESSED if compressed else EC_UNCOMPRESSED
 
         serialized = lib.secp256k1_ec_pubkey_serialize(
-            self.ctx, res_compressed, outlen, self.public_key, int(compressed))
+            self.ctx, res_compressed, outlen, self.public_key, compflag)
         assert serialized == 1
 
         return bytes(ffi.buffer(res_compressed, len_compressed))
@@ -341,7 +346,7 @@ class PrivateKey(Base, ECDSA, Schnorr):
         self.private_key = privkey
         self._update_public_key()
 
-    def serialize(self, compressed=True):
+    def serialize(self):
         hexkey = binascii.hexlify(self.private_key)
         return hexkey.decode('utf8')
 

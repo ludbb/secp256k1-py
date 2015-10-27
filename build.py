@@ -24,10 +24,20 @@ definitions = """
         unsigned int attempt
     );
 
-    #define SECP256K1_CONTEXT_VERIFY 1
-    #define SECP256K1_CONTEXT_SIGN   2
+    #define SECP256K1_FLAGS_TYPE_MASK        255
+    #define SECP256K1_FLAGS_TYPE_CONTEXT     1
+    #define SECP256K1_FLAGS_TYPE_COMPRESSION 2
 
-    #define SECP256K1_EC_COMPRESSED  1
+    #define SECP256K1_FLAGS_BIT_CONTEXT_VERIFY 256
+    #define SECP256K1_FLAGS_BIT_CONTEXT_SIGN   512
+    #define SECP256K1_FLAGS_BIT_COMPRESSION    256
+
+    #define SECP256K1_CONTEXT_VERIFY  257
+    #define SECP256K1_CONTEXT_SIGN    513
+    #define SECP256K1_CONTEXT_NONE    1
+
+    #define SECP256K1_EC_COMPRESSED   258
+    #define SECP256K1_EC_UNCOMPRESSED 2
 
     secp256k1_context* secp256k1_context_create(
         int flags

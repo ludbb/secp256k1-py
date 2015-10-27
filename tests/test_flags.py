@@ -2,8 +2,14 @@ import pytest
 import secp256k1
 
 def test_values():
-    assert secp256k1.FLAG_VERIFY == 1
-    assert secp256k1.FLAG_SIGN == 2
+    assert secp256k1.FLAG_VERIFY == (
+        secp256k1.lib.SECP256K1_FLAGS_TYPE_CONTEXT |
+        secp256k1.lib.SECP256K1_FLAGS_BIT_CONTEXT_VERIFY)
+    assert secp256k1.FLAG_VERIFY == 257
+    assert secp256k1.FLAG_SIGN == (
+        secp256k1.lib.SECP256K1_FLAGS_TYPE_CONTEXT |
+        secp256k1.lib.SECP256K1_FLAGS_BIT_CONTEXT_SIGN)
+    assert secp256k1.FLAG_SIGN == 513
     assert secp256k1.ALL_FLAGS == secp256k1.FLAG_SIGN | secp256k1.FLAG_VERIFY
 
 def test_privkey():
@@ -29,7 +35,7 @@ def test_pubkey():
     sig = privkey.ecdsa_sign(b'hello')
     pubkeyser = privkey.pubkey.serialize()
 
-    pubkey = secp256k1.PublicKey(pubkeyser, raw=True, flags=0)
+    pubkey = secp256k1.PublicKey(pubkeyser, raw=True, flags=secp256k1.NO_FLAGS)
     with pytest.raises(Exception):
         # FLAG_SIGN was not specified.
         pubkey.ecdsa_verify(b'hello', sig)

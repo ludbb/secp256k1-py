@@ -123,11 +123,12 @@ def test_schnorr():
     inst = secp256k1.PrivateKey()
     raw_sig = inst.schnorr_sign(b'hello')
 
-    test1 = secp256k1.PublicKey(inst.pubkey.public_key, flags=0)
+    test1 = secp256k1.PublicKey(inst.pubkey.public_key,
+                                flags=secp256k1.NO_FLAGS)
     with pytest.raises(Exception):
         test1.schnorr_verify(b'hello', raw_sig)
 
-    blank = secp256k1.PublicKey(flags=0)
+    blank = secp256k1.PublicKey(flags=secp256k1.NO_FLAGS)
     with pytest.raises(Exception):
         blank.schnorr_recover(b'hello', raw_sig)
 
@@ -147,7 +148,7 @@ def test_schnorr_partial():
     pubnonce2, privnonce2 = signer2.schnorr_generate_nonce_pair(b'hello')
 
     partial1 = signer1.schnorr_partial_sign(b'hello', privnonce1, pubnonce2)
-    blank = secp256k1.PublicKey(flags=0)
+    blank = secp256k1.PublicKey(flags=secp256k1.NO_FLAGS)
 
     with pytest.raises(TypeError):
         blank.schnorr_partial_combine([partial1, secp256k1.ffi.NULL])

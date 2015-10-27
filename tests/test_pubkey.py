@@ -24,8 +24,7 @@ def test_pubkey_from_privkey():
         assert inst.pubkey.serialize(compressed=False) == pubkey_uncp
         assert inst.pubkey.serialize(compressed=True) == pubkey_comp
 
-        assert inst.deserialize(inst.serialize(compressed=True)) == seckey
-        assert inst.deserialize(inst.serialize(compressed=False)) == seckey
+        assert inst.deserialize(inst.serialize()) == seckey
 
 def test_pubkey_combine():
     k1 = secp256k1.PrivateKey()

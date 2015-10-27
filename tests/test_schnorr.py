@@ -33,7 +33,7 @@ def test_schnorr_partial():
     # First test partial signatures with only two signers.
     partial1 = signer1.schnorr_partial_sign(b'hello', privnonce1, pubnonce2)
     partial2 = signer2.schnorr_partial_sign(b'hello', privnonce2, pubnonce1)
-    blank = secp256k1.PublicKey(flags=0)
+    blank = secp256k1.PublicKey(flags=secp256k1.NO_FLAGS)
     sig = blank.schnorr_partial_combine([partial1, partial2])
 
     # Recover the public key from the combined signature.
