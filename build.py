@@ -162,7 +162,7 @@ definitions = """
         const secp256k1_context* ctx,
         secp256k1_pubkey *out,
         const secp256k1_pubkey * const * ins,
-        int n
+        size_t n
     );
 """
 
@@ -259,7 +259,7 @@ definitions_schnorr = """
         const secp256k1_context* ctx,
         unsigned char *sig64,
         const unsigned char * const * sig64sin,
-        int n
+        size_t n
     );
 """
 
