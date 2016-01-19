@@ -1,0 +1,4 @@
+[submodule "libsecp256k1"]
+	path = libsecp256k1
+	url = https://github.com/bitcoin/secp256k1
+	branch = master
