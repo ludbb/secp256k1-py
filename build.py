@@ -290,8 +290,8 @@ def build_ffi(include_recovery=False, include_schnorr=False, include_ecdh=False)
         cdefs += definitions_ecdh
         source += "\n#include <secp256k1_ecdh.h>"
 
-    incpath = [os.environ['INCLUDE_DIR']] if 'INCLUDE_DIR' in os.environ else None
-    libpath = [os.environ['LIB_DIR']] if 'LIB_DIR' in os.environ else None
+    incpath = [os.environ['INCLUDE_DIR'] if 'INCLUDE_DIR' in os.environ else "./libsecp256k1/include"]
+    libpath = [os.environ['LIB_DIR'] if 'LIB_DIR' in os.environ else "./libsecp256k1/.libs"]
 
     ffi.set_source(
         "_libsecp256k1",

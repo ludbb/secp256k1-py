@@ -10,12 +10,12 @@ classifiers = [
 ]
 
 setup(
-    name="secp256k1",
+    name="secp256k1-transient",
     version="0.11.1",
     description='FFI bindings to secp256k1',
-    author='Ludvig Broberg',
-    author_email='lud@tutanota.com',
-    url='https://github.com/ludbb/secp256k1-py',
+    author='Pawel Bylica',
+    author_email='chfast@gmail.com',
+    url='https://github.com/chfast/secp256k1-py',
     license='MIT',
     classifiers=classifiers,
     py_modules=['secp256k1'],
