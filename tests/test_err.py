@@ -95,6 +95,10 @@ def test_ecdsa_compact():
         key.ecdsa_deserialize_compact(ser)
 
 def test_ecdsa_recoverable():
+    if not secp256k1.HAS_RECOVERABLE:
+        pytest.skip('secp256k1_recovery not enabled, skipping')
+        return
+
     key = '32a8935ffdb984a498b0f7ac8943e0d2ac084e81c809595fd19fde41522f1837'
     priv = secp256k1.PrivateKey(bytes(bytearray.fromhex(key)))
     sig = priv.ecdsa_sign_recoverable(b'hi')

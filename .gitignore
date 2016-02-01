@@ -9,3 +9,4 @@ _libsecp256k1*
 .cache/
 *.egg
 htmlcov
+libsecp256k1

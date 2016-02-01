@@ -1,7 +1,19 @@
 language: python
+
 python:
   - "2.7"
   - "3.3"
+  - "3.4"
+
+env:
+  global:
+    - LD_LIBRARY_PATH=./libsecp256k1_ext/.libs
+    - LIB_DIR=./libsecp256k1_ext/.libs
+    - INCLUDE_DIR=./libsecp256k1_ext/include
+  matrix:
+    - BUNDLED=0
+    - BUNDLED=1
+    - BUNDLED=1 SECP_BUNDLED_EXPERIMENTAL=1
 
 sudo: false
 
@@ -12,23 +24,29 @@ addons:
       - libtool
       - autoconf
       - automake
+      - pkg-config
+      - libffi-dev
+      - libgmp-dev
 
 before_install:
-  - git clone git://github.com/bitcoin/secp256k1.git libsecp256k1
-  - pushd libsecp256k1
-  - ./autogen.sh
-  - ./configure --enable-module-recovery --enable-module-ecdh --enable-module-schnorr
-  - make
-  - popd
-  - virtualenv ENV
-  - source ENV/bin/activate
-  - pip install -U pip setuptools cffi coverage coveralls
+  - ./travis_install.sh
+  - pip install -U pip setuptools cffi pytest coverage coveralls
 
 install:
-  - LIB_DIR=./libsecp256k1/.libs INCLUDE_DIR=./libsecp256k1/include python setup.py -q install
+  - python setup.py install
 
+# This is a bit of a hack:
+# We want to ensure that we test the installed version, not the local source.
+# For that reason we rename the local source directory before running the
+# tests.
+# Unfortunately this compilcates using coverage. We use '--parallel' and
+# 'combine' to massage it into producing correct paths. For that to work
+# we need to re-rename the source back to it's correct name.
 script:
-  - LD_LIBRARY_PATH=./libsecp256k1/.libs LIB_DIR=./libsecp256k1/.libs INCLUDE_DIR=./libsecp256k1/include coverage run --source=secp256k1 setup.py pytest
+  - mv secp256k1 _secp256k1
+  - coverage run --parallel --include="*/site-packages/*.egg/secp256k1/*" -m py.test
+  - mv _secp256k1 secp256k1
+  - coverage combine
 
 after_success:
   - coveralls

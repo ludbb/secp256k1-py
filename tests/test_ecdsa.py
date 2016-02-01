@@ -130,6 +130,9 @@ def test_cli_ecdsa():
     assert out.getvalue().strip() == str(False)
 
 def test_cli_ecdsa_recover():
+    if not secp256k1.HAS_RECOVERABLE:
+        pytest.skip('secp256k1_recovery not enabled, skipping')
+        return
     parser, enc = secp256k1._parse_cli()
 
     args = parser.parse_args(['privkey', '-p'])

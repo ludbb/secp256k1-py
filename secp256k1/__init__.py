@@ -2,7 +2,7 @@ import os
 import hashlib
 import binascii
 
-from _libsecp256k1 import ffi, lib
+from ._libsecp256k1 import ffi, lib
 
 
 EC_COMPRESSED = lib.SECP256K1_EC_COMPRESSED
