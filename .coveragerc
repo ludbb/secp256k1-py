@@ -2,3 +2,11 @@
 
 exclude_lines =
 	if __name__ == .__main__.:
+
+[paths]
+source =
+    secp256k1
+    */site-packages/secp256k1/
+    */site-packages/*.egg/secp256k1/
+    */dist-packages/secp256k1/
+    */dist-packages/*.egg/secp256k1/

@@ -1,18 +1,60 @@
 # secp256k1-py [![Build Status](https://travis-ci.org/ludbb/secp256k1-py.svg?branch=master)](https://travis-ci.org/ludbb/secp256k1-py) [![Coverage Status](https://coveralls.io/repos/ludbb/secp256k1-py/badge.svg?branch=master&service=github)](https://coveralls.io/github/ludbb/secp256k1-py?branch=master)
 
-Python FFI bindings for [secp256k1](https://github.com/bitcoin/secp256k1)
+Python FFI bindings for [libsecp256k1](https://github.com/bitcoin/secp256k1)
 (an experimental and optimized C library for EC operations on curve secp256k1).
+
+## Installation
 
 ```
 pip install secp256k1
 ```
 
-In case the headers or lib for secp256k1 are not in your path, it's
-possible to specify `INCLUDE_DIR` and `LIB_DIR` as in:
+There are two modes of installation depending on whether you already have
+libsecp256k1 installed on your system:
+
+
+###### Using a system installed libsecp256k1
+
+If the library is already installed it should usually be automatically detected
+and used.
+However if libsecp256k1 is installed in a non standard location you can use the
+environment variables `INCLUDE_DIR` and `LIB_DIR` to point the way:
 
 ```
-INCLUDE_DIR=/usr/local/include LIB_DIR=/usr/local/lib pip install secp256k1
+INCLUDE_DIR=/opt/somewhere/include LIB_DIR=/opt/somewhere/lib pip install secp256k1
 ```
+
+
+###### Using the bundled libsecp256k1
+
+If on the other hand you don't have libsecp256k1 installed on your system, a
+bundled version will be built and used. In this case only the `recovery` module
+will be enabled since it's the only one not currently considered as
+"experimental" by the library authors. This can be overridden by setting the
+`SECP_BUNDLED_EXPERIMENTAL` environment variable:
+
+```
+SECP_BUNDLED_EXPERIMENTAL=1 pip install secp256k1
+```
+
+For the bundled version to compile successfully you need to have a C compiler
+as well as the development headers for `libffi` and `libgmp` installed.
+
+On Debian / Ubuntu for example the necessary packages are:
+
+* `build-essential`
+* `automake`
+* `pkg-config`
+* `libtool`
+* `libffi-dev`
+* `libgmp-dev`
+
+On OS X the necessary homebrew packages are:
+
+* `automake`
+* `pkg-config`
+* `libffi`
+* `gmp`
 
 
 ## Command line usage
@@ -287,3 +329,39 @@ pubkey_ser_uncompressed = privkey.pubkey.serialize(compressed=False)
 assert pubkey_ser == bytes(bytearray.fromhex(pub_compressed))
 assert pubkey_ser_uncompressed == bytes(bytearray.fromhex(pub_uncompressed))
 ```
+
+
+## Technical details about the bundled libsecp256k1
+
+The bundling of libsecp256k1 is handled by the various setup.py build phases:
+
+- During 'sdist':
+  If the directory `libsecp256k1` doesn't exist in the
+  source directory it is downloaded from the location specified
+  by the `LIB_TARBALL_URL` constant in `setup.py` and extracted into
+  a directory called `libsecp256k1`
+
+  To upgrade to a newer version of the bundled libsecp256k1 source
+  simply delete the `libsecp256k1` directory and update the
+  `LIB_TARBALL_URL` to point to a newer commit.
+
+- During 'install':
+  If an existing (system) installation of libsecp256k1 is found
+  (either in the default library locations or in the location pointed
+  to by the environment variable `LIB_DIR`) it is used as before.
+
+  Due to the way the way cffi modules are implemented it is necessary
+  to perform this detection in the cffi build module
+  `_cffi_build/build.py` as well as in `setup.py`. For that reason
+  some utility functions have been moved into a `setup_support.py`
+  module which is imported from both.
+
+  If however no existing installation can be found the bundled
+  source code is used to build a library locally that will be
+  statically linked into the CFFI extension.
+
+  By default only the `recovery` module will be enabled in this bundled
+  version as it is the only one not considered to be 'experimental' by
+  the libsecp256k1 authors. It is possible to override this and enable
+  all modules by setting the environment variable
+  `SECP_BUNDLED_EXPERIMENTAL`.
