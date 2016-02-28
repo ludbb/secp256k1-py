@@ -226,7 +226,7 @@ class develop(_develop):
 
 setup(
     name="secp256k1",
-    version="0.11.1",
+    version="0.12.0",
 
     description='FFI bindings to libsecp256k1',
     url='https://github.com/ludbb/secp256k1-py',
