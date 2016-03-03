@@ -38,6 +38,14 @@ if [int(i) for i in setuptools_version.split('.')] < [3, 3]:
         "Your setuptools version ({}) is too old to correctly install this "
         "package. Please upgrade to a newer version (>= 3.3).".format(setuptools_version)
     )
+
+# Ensure pkg-config is available
+try:
+    subprocess.check_call(['pkg-config', '--version'])
+except OSError:
+    raise SystemExit(
+        "'pkg-config' is required to install this package. "
+        "Please see the README for details."
     )
 
 
