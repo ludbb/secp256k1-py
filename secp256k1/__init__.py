@@ -272,7 +272,7 @@ class PublicKey(Base, ECDSA, Schnorr):
         Tweak the current public key by multiplying it by a 32 byte scalar
         and return a new PublicKey instance.
         """
-        return _tweak_public(self, lib.secp256k1_ec_pubkey_tweak_add, scalar)
+        return _tweak_public(self, lib.secp256k1_ec_pubkey_tweak_mul, scalar)
 
     def ecdsa_verify(self, msg, raw_sig, raw=False, digest=hashlib.sha256):
         assert self.public_key, "No public key defined"
