@@ -32,11 +32,20 @@ from setup_support import absolute, build_flags, has_system_lib
 LIB_TARBALL_URL = "https://github.com/bitcoin/secp256k1/archive/bd2895fdd92d4dcb0360181082a8d7d078518162.tar.gz"
 
 
-# We require setuptools >= 12.0
-if [int(i) for i in setuptools_version.split('.')] < [12, 0]:
+# We require setuptools >= 3.3
+if [int(i) for i in setuptools_version.split('.')] < [3, 3]:
     raise SystemExit(
         "Your setuptools version ({}) is too old to correctly install this "
-        "package. Please upgrade to a newer version.".format(setuptools_version)
+        "package. Please upgrade to a newer version (>= 3.3).".format(setuptools_version)
+    )
+
+# Ensure pkg-config is available
+try:
+    subprocess.check_call(['pkg-config', '--version'])
+except OSError:
+    raise SystemExit(
+        "'pkg-config' is required to install this package. "
+        "Please see the README for details."
     )
 
 
