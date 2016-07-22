@@ -9,6 +9,24 @@ Python FFI bindings for [libsecp256k1](https://github.com/bitcoin/secp256k1)
 pip install secp256k1
 ```
 
+### Precompiled binary packages (wheels)
+
+Precompiled binary "wheels" are available for Python 2.7, 3.4 and 3.5 on
+macOS and Linux. To take advantage of those you need to use pip >= 8.1.0.
+
+In case you don't want to use the binary packages you can prevent pip from
+using them with the following command:
+
+```
+pip install --no-binary secp256k1
+```
+
+
+### Installation with compilation
+
+If you either can't or don't want to use the binary package options described
+above read on to learn what is needed to install the source pacakge.
+
 There are two modes of installation depending on whether you already have
 libsecp256k1 installed on your system:
 
@@ -21,7 +39,7 @@ However if libsecp256k1 is installed in a non standard location you can use the
 environment variables `INCLUDE_DIR` and `LIB_DIR` to point the way:
 
 ```
-INCLUDE_DIR=/opt/somewhere/include LIB_DIR=/opt/somewhere/lib pip install secp256k1
+INCLUDE_DIR=/opt/somewhere/include LIB_DIR=/opt/somewhere/lib pip install --no-binary secp256k1
 ```
 
 
@@ -34,7 +52,7 @@ will be enabled since it's the only one not currently considered as
 `SECP_BUNDLED_EXPERIMENTAL` environment variable:
 
 ```
-SECP_BUNDLED_EXPERIMENTAL=1 pip install secp256k1
+SECP_BUNDLED_EXPERIMENTAL=1 pip install --no-binary secp256k1
 ```
 
 For the bundled version to compile successfully you need to have a C compiler
@@ -53,6 +71,7 @@ On OS X the necessary homebrew packages are:
 
 * `automake`
 * `pkg-config`
+* `libtool`
 * `libffi`
 * `gmp`
 
