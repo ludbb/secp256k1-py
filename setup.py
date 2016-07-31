@@ -15,6 +15,11 @@ from setuptools import Distribution as _Distribution, setup, find_packages, __ve
 from setuptools.command.develop import develop as _develop
 from setuptools.command.egg_info import egg_info as _egg_info
 from setuptools.command.sdist import sdist as _sdist
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+except ImportError:
+    _bdist_wheel = None
+    pass
 
 try:
     from urllib2 import urlopen, URLError
@@ -29,7 +34,7 @@ from setup_support import absolute, build_flags, has_system_lib
 
 # Version of libsecp256k1 to download if none exists in the `libsecp256k1`
 # directory
-LIB_TARBALL_URL = "https://github.com/bitcoin/secp256k1/archive/bd2895fdd92d4dcb0360181082a8d7d078518162.tar.gz"
+LIB_TARBALL_URL = "https://github.com/bitcoin-core/secp256k1/archive/c5b32e16c4d2560ce829caf88a413fc06fd83d09.tar.gz"
 
 
 # We require setuptools >= 3.3
@@ -89,6 +94,15 @@ class sdist(_sdist):
     def run(self):
         download_library(self)
         _sdist.run(self)
+
+
+if _bdist_wheel:
+    class bdist_wheel(_bdist_wheel):
+        def run(self):
+            download_library(self)
+            _bdist_wheel.run(self)
+else:
+    bdist_wheel = None
 
 
 class Distribution(_Distribution):
@@ -180,6 +194,12 @@ class build_clib(_build_clib):
             "--prefix",
             os.path.abspath(self.build_clib),
         ]
+        if os.environ.get('SECP_BUNDLED_WITH_BIGNUM'):
+            log.info("Building with bignum support (requires libgmp)")
+            cmd.extend(["--with-bignum=gmp"])
+        else:
+            cmd.extend(["--without-bignum"])
+
         if os.environ.get('SECP_BUNDLED_EXPERIMENTAL'):
             log.info("Building experimental")
             cmd.extend([
@@ -259,6 +279,7 @@ setup(
         'develop': develop,
         'egg_info': egg_info,
         'sdist': sdist,
+        'bdist_wheel': bdist_wheel
     },
     distclass=Distribution,
     zip_safe=False,

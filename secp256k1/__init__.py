@@ -581,7 +581,7 @@ def _parse_cli():
     def bytes_input(s):
         return s if py2 else s.encode(enc)
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog="secp256k1")
     subparser = parser.add_subparsers(dest='action')
 
     genparser = subparser.add_parser('privkey')
@@ -611,8 +611,12 @@ def _parse_cli():
     return parser, enc
 
 
-if __name__ == '__main__':
+def main():
     import sys
     parser, enc = _parse_cli()
     args = parser.parse_args(sys.argv[1:])
     sys.exit(_main_cli(args, sys.stdout, enc))
+
+
+if __name__ == '__main__':
+    main()
