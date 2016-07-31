@@ -14,11 +14,11 @@ if [[ $TRAVIS_OS_NAME == "osx" ]]; then
 	PYTHON_PKG_35="https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg"
 	GET_PIP="https://bootstrap.pypa.io/get-pip.py"
 
-  	# update brew
-  	brew update || brew update
+	# update brew
+	brew update || brew update
 
-  	# Update openssl if necessary
-  	brew outdated openssl || brew upgrade openssl
+	# Update openssl if necessary
+	brew outdated openssl || brew upgrade openssl
 
 	# Install packages needed to build lib-secp256k1
 	# Note we don't install gmp because we don't test that combination on macOS
@@ -69,9 +69,9 @@ if [[ $TRAVIS_OS_NAME == "osx" ]]; then
 		builtin popd
 	fi
 
-  	mkdir ~/virtualenv
-  	${python} -m ${virtualenv} ~/virtualenv/python${TRAVIS_PYTHON_VERSION}
-  	source ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
+	mkdir ~/virtualenv
+	${python} -m ${virtualenv} ~/virtualenv/python${TRAVIS_PYTHON_VERSION}
+	source ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/activate
 fi
 
 # Build lib-secp256k1 to test non bundled installation

@@ -15,7 +15,7 @@ ffi.cdef('static int nonce_function_rand(unsigned char *nonce32,'
 
 #The most elementary conceivable nonce function, acting
 #as a passthrough: user provides random data which must be
-#a valid scalar nonce. This is not ideal, 
+#a valid scalar nonce. This is not ideal,
 #since libsecp256k1 expects the nonce output from
 #this function to result in a valid sig (s!=0), and will
 #increment the counter ("attempt") and try again if it fails;
@@ -49,7 +49,7 @@ def test_ecdsa_with_custom_nonce():
     for item in vec:
         seckey = bytes(bytearray.fromhex(item['privkey']))
         msg32 = bytes(bytearray.fromhex(item['msg']))
-        sig = bytes(bytearray.fromhex(item['sig']))        
+        sig = bytes(bytearray.fromhex(item['sig']))
         randnonce = bytes(bytearray.fromhex(item['nonce']))
         inst.set_raw_privkey(seckey)
         nf = ffi.addressof(_noncefunc.lib, "nonce_function_rand")
