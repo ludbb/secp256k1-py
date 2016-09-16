@@ -25,8 +25,6 @@ ls -l dist
 
 python -m pip install twine
 
-twine register dist/secp256k1*.tar.gz -u "${PYPI_USERNAME}" -p "${PYPI_PASSWD}"
-
 # Ignore non-existing files in globs
 shopt -s nullglob
 
