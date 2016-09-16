@@ -11,7 +11,7 @@ pip install secp256k1
 
 ### Precompiled binary packages (wheels)
 
-Precompiled binary wheels is available for Python 3.5 on Linux. To take advantage of those you need to use pip >= 8.1.0.
+Precompiled binary wheels is available for Python 2.7, 3.3, 3.4, and 3.5 on Linux. To take advantage of those you need to use pip >= 8.1.0.
 
 In case you don't want to use the binary packages you can prevent pip from
 using them with the following command:
