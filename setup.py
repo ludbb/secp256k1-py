@@ -148,6 +148,7 @@ class build_clib(_build_clib):
             log.info("Using system library")
             return
 
+        self.get_source_files()
         build_temp = os.path.abspath(self.build_temp)
 
         try:
