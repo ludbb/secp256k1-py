@@ -7,15 +7,8 @@ def test_ecdh():
         pytest.skip('secp256k1_ecdh not enabled, skipping')
         return
 
-    pubkey = secp256k1.PrivateKey().pubkey
+    pubkey = secp256k1.PublicKey(b'\x04\xf0\xd2\xb9y\x81\xbd\rAZ\x84;]\xfe\x8a\xb7z00\r\xaa\xb3e\x8cW\x8f#@0\x8a-\xa1\xa0\x7f\x08!6s2Y\x8bj\xa4\xe1\x80\xa4\x1e\x92\xf4\xeb\xba\xe3Q\x8d\xa8G\xf0\xb1\xc0\xbb\xfe \xbc\xf4\xe1', raw=True)
 
-    p = secp256k1.PublicKey(pubkey.public_key)
-    with pytest.raises(Exception):
-        # Bad scalar length.
-        p.ecdh(b'')
-    with pytest.raises(Exception):
-        # Bad scalar type.
-        p.ecdh([])
 
-    res = p.ecdh(b'0' * 32)
-    assert type(res) == bytes
+    res = p.ecdh(b'3!C\xe9b\x9e\xed\xff}\x14-t\x1f\x89bX\xf5\xa1\xbf\xabT\xda\xb2\x12\x1d>\xc5\x00\x00\x93\xd7K')
+    assert res == b'\xee\x14\x18`|/\xcf\xb5\x7f\xda@8\x0e\x88Zp\x7fI\x00\n]\xda\x05m\x82\x8b}\x9b\xd1\xf2\x9a\x08'
