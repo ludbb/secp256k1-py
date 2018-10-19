@@ -34,7 +34,7 @@ from setup_support import absolute, build_flags, has_system_lib
 
 # Version of libsecp256k1 to download if none exists in the `libsecp256k1`
 # directory
-LIB_TARBALL_URL = "https://github.com/bitcoin-core/secp256k1/archive/c5b32e16c4d2560ce829caf88a413fc06fd83d09.tar.gz"
+LIB_TARBALL_URL = "https://github.com/bitcoin-core/secp256k1/archive/1086fda4c1975d0cad8d3cad96794a64ec12dca4.tar.gz"
 
 
 # We require setuptools >= 3.3
