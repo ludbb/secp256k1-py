@@ -5,6 +5,7 @@ python:
 - '3.3'
 - '3.4'
 - '3.5'
+- '3.6'
 env:
   global:
   - LD_LIBRARY_PATH=./libsecp256k1_ext/.libs
