@@ -24,7 +24,7 @@ pip install --no-binary secp256k1
 ### Installation with compilation
 
 If you either can't or don't want to use the binary package options described
-above read on to learn what is needed to install the source pacakge.
+above read on to learn what is needed to install the source package.
 
 There are two modes of installation depending on whether you already have
 libsecp256k1 installed on your system:
