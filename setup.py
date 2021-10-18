@@ -201,7 +201,8 @@ class build_clib(_build_clib):
             cmd.extend([
                 "--enable-experimental",
                 "--enable-module-ecdh",
-                "--enable-module-schnorr",
+                "--enable-module-schnorrsig",
+                "--enable-module-extrakeys",
             ])
 
         log.debug("Running configure: {}".format(" ".join(cmd)))

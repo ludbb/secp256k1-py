@@ -14,7 +14,7 @@ ALL_FLAGS = FLAG_SIGN | FLAG_VERIFY
 NO_FLAGS = lib.SECP256K1_CONTEXT_NONE
 
 HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
-HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorr_sign')
+HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorrsig_sign')
 HAS_ECDH = hasattr(lib, 'secp256k1_ecdh')
 
 
