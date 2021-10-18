@@ -255,12 +255,14 @@ class develop(_develop):
 
 setup(
     name="secp256k1",
-    version="0.13.2",
+    version="0.14.0",
 
     description='FFI bindings to libsecp256k1',
     url='https://github.com/ludbb/secp256k1-py',
     author='Ludvig Broberg',
     author_email='lud@tutanota.com',
+    maintainer='Rusty Russell',
+    maintainer_email='rusty@rustcorp.com.au',
     license='MIT',
 
     setup_requires=['cffi>=1.3.0', 'pytest-runner==2.6.2'],
