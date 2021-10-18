@@ -125,40 +125,12 @@ def test_schnorr():
         return
 
     inst = secp256k1.PrivateKey()
-    raw_sig = inst.schnorr_sign(b'hello')
+    raw_sig = inst.schnorr_sign(b'hello', 'test_schnorr')
 
     test1 = secp256k1.PublicKey(inst.pubkey.public_key,
                                 flags=secp256k1.NO_FLAGS)
     with pytest.raises(Exception):
-        test1.schnorr_verify(b'hello', raw_sig)
-
-    blank = secp256k1.PublicKey(flags=secp256k1.NO_FLAGS)
-    with pytest.raises(Exception):
-        blank.schnorr_recover(b'hello', raw_sig)
-
-    blank = secp256k1.PublicKey(flags=secp256k1.FLAG_SIGN)
-    with pytest.raises(Exception):
-        blank.schnorr_recover(b'hello', raw_sig)
-
-def test_schnorr_partial():
-    if not secp256k1.HAS_SCHNORR:
-        pytest.skip('secp256k1_schnorr not enabled, skipping')
-        return
-
-    signer1 = secp256k1.PrivateKey()
-    pubnonce1, privnonce1 = signer1.schnorr_generate_nonce_pair(b'hello')
-
-    signer2 = secp256k1.PrivateKey()
-    pubnonce2, privnonce2 = signer2.schnorr_generate_nonce_pair(b'hello')
-
-    partial1 = signer1.schnorr_partial_sign(b'hello', privnonce1, pubnonce2)
-    blank = secp256k1.PublicKey(flags=secp256k1.NO_FLAGS)
-
-    with pytest.raises(TypeError):
-        blank.schnorr_partial_combine([partial1, secp256k1.ffi.NULL])
-
-    with pytest.raises(Exception):
-        blank.schnorr_partial_combine([partial1, b''])
+        test1.schnorr_verify(b'hello', raw_sig, 'test_schnorr')
 
 def test_tweak():
     key = secp256k1.PrivateKey()

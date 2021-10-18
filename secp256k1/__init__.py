@@ -16,6 +16,7 @@ NO_FLAGS = lib.SECP256K1_CONTEXT_NONE
 HAS_RECOVERABLE = hasattr(lib, 'secp256k1_ecdsa_sign_recoverable')
 HAS_SCHNORR = hasattr(lib, 'secp256k1_schnorrsig_sign')
 HAS_ECDH = hasattr(lib, 'secp256k1_ecdh')
+HAS_EXTRAKEYS = hasattr(lib, 'secp256k1_keypair_create')
 
 
 class Base(object):
@@ -37,6 +38,21 @@ class Base(object):
         if self._destroy and self.ctx:
             self._destroy(self.ctx)
             self.ctx = None
+
+
+    def bip340_tag(self, msg, raw, tag):
+        if raw:
+            return msg
+
+        if isinstance(tag, bytes):
+            bytestag = tag
+        else:
+            bytestag = tag.encode()
+
+        hash32 = ffi.new('char [32]')
+        lib.secp256k1_tagged_sha256(self.ctx, hash32, bytestag, len(bytestag),
+                                    msg, len(msg))
+        return bytes(ffi.buffer(hash32, 32))
 
 
 class ECDSA:  # Use as a mixin; instance.ctx is assumed to exist.
@@ -172,8 +188,14 @@ class PublicKey(Base, ECDSA):
                     raise TypeError('pubkey must be an internal object')
                 assert ffi.typeof(pubkey) is ffi.typeof('secp256k1_pubkey *')
                 self.public_key = pubkey
+            self._pubkey_changed()
         else:
             self.public_key = None
+
+    def _pubkey_changed(self):
+        if HAS_EXTRAKEYS:
+            self.xonly_pubkey = ffi.new('secp256k1_xonly_pubkey *')
+            assert lib.secp256k1_xonly_pubkey_from_pubkey(self.ctx, self.xonly_pubkey, ffi.NULL, self.public_key) == 1
 
     def serialize(self, compressed=True):
         assert self.public_key, "No public key defined"
@@ -201,6 +223,7 @@ class PublicKey(Base, ECDSA):
             raise Exception("invalid public key")
 
         self.public_key = pubkey
+        self._pubkey_changed()
         return pubkey
 
     def combine(self, pubkeys):
@@ -217,6 +240,7 @@ class PublicKey(Base, ECDSA):
             raise Exception('failed to combine public keys')
 
         self.public_key = outpub
+        self._pubkey_changed()
         return outpub
 
     def tweak_add(self, scalar):
@@ -245,18 +269,17 @@ class PublicKey(Base, ECDSA):
 
         return bool(verified)
 
-    def schnorr_verify(self, msg, schnorr_sig, raw=False,
-                       digest=hashlib.sha256):
+    def schnorr_verify(self, msg, schnorr_sig, bip340tag, raw=False):
         assert self.public_key, "No public key defined"
         if not HAS_SCHNORR:
             raise Exception("secp256k1_schnorr not enabled")
         if self.flags & FLAG_VERIFY != FLAG_VERIFY:
             raise Exception("instance not configured for sig verification")
 
-        msg32 = _hash32(msg, raw, digest)
+        msg_to_sign = self.bip340_tag(msg, raw, bip340tag)
 
-        verified = lib.secp256k1_schnorr_verify(
-            self.ctx, schnorr_sig, msg32, self.public_key)
+        verified = lib.secp256k1_schnorrsig_verify(
+            self.ctx, schnorr_sig, msg_to_sign, len(msg_to_sign), self.xonly_pubkey)
 
         return bool(verified)
 
@@ -300,6 +323,10 @@ class PrivateKey(Base, ECDSA):
         public_key = self._gen_public_key(self.private_key)
         self.pubkey = PublicKey(
             public_key, raw=False, ctx=self.ctx, flags=self.flags)
+        if HAS_EXTRAKEYS:
+            self.keypair = ffi.new('secp256k1_keypair *')
+            if lib.secp256k1_keypair_create(self.ctx, self.keypair, self.private_key) != 1:
+                raise Exception("invalid private key (can't make keypair?)")
 
     def set_raw_privkey(self, privkey):
         if not lib.secp256k1_ec_seckey_verify(self.ctx, privkey):
@@ -367,15 +394,17 @@ class PrivateKey(Base, ECDSA):
 
         return raw_sig
 
-    def schnorr_sign(self, msg, raw=False, digest=hashlib.sha256):
+    def schnorr_sign(self, msg, bip340tag, raw=False):
         if not HAS_SCHNORR:
             raise Exception("secp256k1_schnorr not enabled")
 
-        msg32 = _hash32(msg, raw, digest)
+        msg_to_sign = self.bip340_tag(msg, raw, bip340tag)
         sig64 = ffi.new('char [64]')
 
-        signed = lib.secp256k1_schnorr_sign(
-            self.ctx, sig64, msg32, self.private_key, ffi.NULL, ffi.NULL)
+        # FIXME: It's recommended to provide aux_rand32...
+        signed = lib.secp256k1_schnorrsig_sign_custom(
+            self.ctx, sig64, msg_to_sign, len(msg_to_sign),
+            self.keypair, ffi.NULL)
         assert signed == 1
 
         return bytes(ffi.buffer(sig64, 64))
