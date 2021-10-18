@@ -301,16 +301,18 @@ class PublicKey(Base, ECDSA, Schnorr):
 
         return bool(verified)
 
-    def ecdh(self, scalar):
+    def ecdh(self, scalar, hashfn=lib.secp256k1_ecdh_hash_function_sha256, hasharg=ffi.NULL):
         assert self.public_key, "No public key defined"
         if not HAS_ECDH:
             raise Exception("secp256k1_ecdh not enabled")
+        # Technically, it need only match the hashfn, but this is standard.
         if not isinstance(scalar, bytes) or len(scalar) != 32:
             raise TypeError('scalar must be composed of 32 bytes')
 
         result = ffi.new('char [32]')
 
-        res = lib.secp256k1_ecdh(self.ctx, result, self.public_key, scalar)
+        res = lib.secp256k1_ecdh(self.ctx, result, self.public_key, scalar,
+                                 hashfn, hasharg)
         if not res:
             raise Exception('invalid scalar ({})'.format(res))
 
