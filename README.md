@@ -17,7 +17,7 @@ In case you don't want to use the binary packages you can prevent pip from
 using them with the following command:
 
 ```
-pip install --no-binary secp256k1
+pip install --no-binary :all: secp256k1
 ```
 
 
@@ -38,7 +38,7 @@ However if libsecp256k1 is installed in a non standard location you can use the
 environment variables `INCLUDE_DIR` and `LIB_DIR` to point the way:
 
 ```
-INCLUDE_DIR=/opt/somewhere/include LIB_DIR=/opt/somewhere/lib pip install --no-binary secp256k1
+INCLUDE_DIR=/opt/somewhere/include LIB_DIR=/opt/somewhere/lib pip install --no-binary :all: secp256k1
 ```
 
 
@@ -51,7 +51,7 @@ will be enabled since it's the only one not currently considered as
 `SECP_BUNDLED_EXPERIMENTAL` environment variable:
 
 ```
-SECP_BUNDLED_EXPERIMENTAL=1 pip install --no-binary secp256k1
+SECP_BUNDLED_EXPERIMENTAL=1 pip install --no-binary :all: secp256k1
 ```
 
 For the bundled version to compile successfully you need to have a C compiler

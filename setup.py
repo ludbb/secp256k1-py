@@ -34,7 +34,7 @@ from setup_support import absolute, build_flags, has_system_lib
 
 # Version of libsecp256k1 to download if none exists in the `libsecp256k1`
 # directory
-LIB_TARBALL_URL = "https://github.com/bitcoin-core/secp256k1/archive/c5b32e16c4d2560ce829caf88a413fc06fd83d09.tar.gz"
+LIB_TARBALL_URL = "https://github.com/bitcoin-core/secp256k1/archive/9526874d1406a13193743c605ba64358d55a8785.tar.gz"
 
 
 # We require setuptools >= 3.3
@@ -194,11 +194,6 @@ class build_clib(_build_clib):
             "--prefix",
             os.path.abspath(self.build_clib),
         ]
-        if os.environ.get('SECP_BUNDLED_WITH_BIGNUM'):
-            log.info("Building with bignum support (requires libgmp)")
-            cmd.extend(["--with-bignum=gmp"])
-        else:
-            cmd.extend(["--without-bignum"])
 
         if os.environ.get('SECP_BUNDLED_EXPERIMENTAL'):
             log.info("Building experimental")
