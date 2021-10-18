@@ -4,6 +4,7 @@ import os.path
 import shutil
 import subprocess
 import tarfile
+import tempfile
 from distutils import log
 from distutils.command.build_clib import build_clib as _build_clib
 from distutils.command.build_ext import build_ext as _build_ext
@@ -148,7 +149,7 @@ class build_clib(_build_clib):
             log.info("Using system library")
             return
 
-        build_temp = os.path.abspath(self.build_temp)
+        build_temp = tempfile.TemporaryDirectory().name
 
         try:
             os.makedirs(build_temp)
