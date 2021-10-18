@@ -142,7 +142,7 @@ class build_clib(_build_clib):
         raise Exception("check_library_list")
 
     def get_library_names(self):
-        return build_flags('libsecp256k1', 'l', os.path.abspath(self.build_temp))
+        return build_flags('libsecp256k1', 'l', os.path.abspath(self.build_clib))
 
     def run(self):
         if has_system_lib():
@@ -213,8 +213,8 @@ class build_clib(_build_clib):
         subprocess.check_call(["make"], cwd=build_temp)
         subprocess.check_call(["make", "install"], cwd=build_temp)
 
-        self.build_flags['include_dirs'].extend(build_flags('libsecp256k1', 'I', build_temp))
-        self.build_flags['library_dirs'].extend(build_flags('libsecp256k1', 'L', build_temp))
+        self.build_flags['include_dirs'].extend(build_flags('libsecp256k1', 'I', self.build_clib))
+        self.build_flags['library_dirs'].extend(build_flags('libsecp256k1', 'L', self.build_clib))
         if not has_system_lib():
             self.build_flags['define'].append(('CFFI_ENABLE_RECOVERY', None))
         else:

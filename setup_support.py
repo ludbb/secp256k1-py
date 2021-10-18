@@ -41,7 +41,7 @@ def absolute(*paths):
 def build_flags(library, type_, path):
     """Return separated build flags from pkg-config output"""
 
-    pkg_config_path = [path]
+    pkg_config_path = [os.path.join(path, 'lib', 'pkgconfig')]
     if "PKG_CONFIG_PATH" in os.environ:
         pkg_config_path.append(os.environ['PKG_CONFIG_PATH'])
     if "LIB_DIR" in os.environ:
