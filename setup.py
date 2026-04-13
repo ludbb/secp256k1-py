@@ -265,7 +265,7 @@ setup(
 
     setup_requires=['cffi>=1.3.0', 'pytest-runner==2.6.2'],
     install_requires=['cffi>=1.3.0'],
-    tests_require=['pytest==2.8.7'],
+    tests_require=['pytest==9.0.3'],
 
     packages=find_packages(exclude=('_cffi_build', '_cffi_build.*', 'libsecp256k1')),
     ext_package="secp256k1",
